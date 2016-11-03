@@ -64,4 +64,18 @@ static ERL_NIF_TERM membrane_util_make_error_args(ErlNifEnv* env, const char* fi
   return membrane_util_make_error(env, enif_make_tuple_from_array(env, tuple, 3));
 }
 
+/**
+ * Builds `{:error, {:internal, field, description}}` for returning when
+ * certain constructor-style functions fails on stuff that should generally
+ * speaking, not fail.
+ */
+static ERL_NIF_TERM membrane_util_make_error_internal(ErlNifEnv* env, const char* field) {
+  ERL_NIF_TERM tuple[3] = {
+    enif_make_atom(env, "internal"),
+    enif_make_atom(env, field)
+  };
+
+  return membrane_util_make_error(env, enif_make_tuple_from_array(env, tuple, 2));
+}
+
 #endif
