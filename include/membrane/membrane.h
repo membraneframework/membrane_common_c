@@ -72,7 +72,7 @@ static ERL_NIF_TERM membrane_util_make_error_args(ErlNifEnv* env, const char* fi
 static ERL_NIF_TERM membrane_util_make_error_internal(ErlNifEnv* env, const char* reason) {
   ERL_NIF_TERM tuple[3] = {
     enif_make_atom(env, "internal"),
-    enif_make_atom(env, field)
+    enif_make_atom(env, reason)
   };
 
   return membrane_util_make_error(env, enif_make_tuple_from_array(env, tuple, 2));
