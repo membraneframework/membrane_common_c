@@ -2,10 +2,14 @@
 #define __MEMBRANE_H__
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <erl_nif.h>
 
 
 #define LOG_MESSAGE_MAX 256;
+
+
+#define MEMBRANE_DEBUG(message, ...) membrane_debug(MEMBRANE_LOG_TAG, message, ##__VA_ARGS__);
 
 
 /**
@@ -14,14 +18,16 @@
  * Accepts standard printf format specifiers and syntax.
  *
  * Moreover, it allows to use %T format specifier to dump erlang terms.
+ *
+ * Use MEMBRANE_DEBUG instead.
  */
-static void MEMBRANE_DEBUG(const char *format, ...) {
+static void membrane_debug(const char *tag, const char *format, ...) {
   char debug[LOG_MESSAGE_MAX];
   va_list args;
 
   va_start(args, format);
   enif_snprintf(debug, LOG_MESSAGE_MAX, format, args);
-  fprintf(stderr, "[%s] %s\n", MEMBRANE_LOG_TAG, debug);
+  fprintf(stderr, "[%s] %s\n", tag, debug);
 
   va_end(args);
 }
