@@ -6,8 +6,6 @@
 #include <erl_nif.h>
 
 
-#define LOG_MESSAGE_MAX 256;
-
 
 #define MEMBRANE_DEBUG(message, ...) membrane_debug(MEMBRANE_LOG_TAG, message, ##__VA_ARGS__);
 
@@ -22,11 +20,11 @@
  * Use MEMBRANE_DEBUG instead.
  */
 static void membrane_debug(const char *tag, const char *format, ...) {
-  char debug[LOG_MESSAGE_MAX];
+  char debug[256];
   va_list args;
 
   va_start(args, format);
-  enif_snprintf(debug, LOG_MESSAGE_MAX, format, args);
+  enif_snprintf(debug, 256, format, args);
   fprintf(stderr, "[%s] %s\n", tag, debug);
 
   va_end(args);
