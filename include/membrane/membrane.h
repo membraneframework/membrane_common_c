@@ -5,7 +5,26 @@
 #include <erl_nif.h>
 
 
-#define MEMBRANE_DEBUG(message, ...) fprintf(stderr, "[%s] " message "\n", MEMBRANE_LOG_TAG, ##__VA_ARGS__);
+#define LOG_MESSAGE_MAX 256;
+
+
+/**
+ * Prints debug message to the stderr.
+ *
+ * Accepts standard printf format specifiers and syntax.
+ *
+ * Moreover, it allows to use %T format specifier to dump erlang terms.
+ */
+static void MEMBRANE_DEBUG(const char *format, ...) {
+  char debug[LOG_MESSAGE_MAX];
+  va_list args;
+
+  va_start(args, format);
+  enif_snprintf(debug, LOG_MESSAGE_MAX, format, args);
+  fprintf(stderr, "[%s] %s\n", MEMBRANE_LOG_TAG, debug);
+
+  va_end(args);
+}
 
 
 /**
