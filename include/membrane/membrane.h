@@ -7,7 +7,7 @@
 
 
 
-#define MEMBRANE_DEBUG(message, ...) printf("[" MEMBRANE_LOG_TAG "] " message, ##__VA_ARGS__);
+#define MEMBRANE_DEBUG(message, ...) printf("[" MEMBRANE_LOG_TAG "] " message "\r\n", ##__VA_ARGS__);
 
 
 /**
