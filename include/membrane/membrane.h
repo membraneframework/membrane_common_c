@@ -7,28 +7,7 @@
 
 
 
-#define MEMBRANE_DEBUG(message, ...) membrane_debug(MEMBRANE_LOG_TAG, message, ##__VA_ARGS__);
-
-
-/**
- * Prints debug message to the stderr.
- *
- * Accepts standard printf format specifiers and syntax.
- *
- * Moreover, it allows to use %T format specifier to dump erlang terms.
- *
- * Use MEMBRANE_DEBUG instead.
- */
-static void membrane_debug(const char *tag, const char *format, ...) {
-  char debug[256];
-  va_list args;
-
-  va_start(args, format);
-  enif_snprintf(debug, 256, format, args);
-  fprintf(stderr, "[%s] %s\n", tag, debug);
-
-  va_end(args);
-}
+#define MEMBRANE_DEBUG(message, ...) printf("[" MEMBRANE_LOG_TAG "] " message, ##__VA_ARGS__);
 
 
 /**
