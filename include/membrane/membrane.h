@@ -37,6 +37,20 @@ static ERL_NIF_TERM membrane_util_make_ok_tuple(ErlNifEnv* env, ERL_NIF_TERM arg
 
 
 /**
+ * Builds `{:ok, arg1, arg2}`.
+ */
+static ERL_NIF_TERM membrane_util_make_ok_tuple2(ErlNifEnv* env, ERL_NIF_TERM arg1, ERL_NIF_TERM arg2) {
+  ERL_NIF_TERM tuple[2] = {
+    enif_make_atom(env, "ok"),
+    arg1,
+    arg2
+  };
+
+  return enif_make_tuple_from_array(env, tuple, 3);
+}
+
+
+/**
  * Builds `:ok`.
  */
 static ERL_NIF_TERM membrane_util_make_ok(ErlNifEnv* env) {
