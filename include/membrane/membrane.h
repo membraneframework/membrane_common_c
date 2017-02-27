@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <erl_nif.h>
+#ifdef __GNUC__
+#include <stdint.h>
+#endif
 
 // varargs parse helpers
 #define MEMBRANE_UTIL_ATOM_STRING_ENCODING ERL_NIF_LATIN1
