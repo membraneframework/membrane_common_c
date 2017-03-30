@@ -22,17 +22,17 @@
   MEMBRANE_UTIL_PARSE_ARG(position, var_name, int var_name, enif_get_int, &var_name)
 
 #define MEMBRANE_UTIL_PARSE_ATOM_ARG(position, var_name, max_size) \
-  MEMBRANE_UTIL_PARSE_ARG(position, var_name, char var_name[max_size], enif_get_atom, &var_name, max_size, ERL_NIF_LATIN1)
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, char var_name[max_size], enif_get_atom, (char *) var_name, max_size, ERL_NIF_LATIN1)
 
 #define MEMBRANE_UTIL_PARSE_STRING_ARG(position, var_name, max_size) \
-  MEMBRANE_UTIL_PARSE_ARG(position, var_name, char var_name[max_size], enif_get_string, &var_name, max_size, ERL_NIF_LATIN1)
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, char var_name[max_size], enif_get_string, (char *) var_name, max_size, ERL_NIF_LATIN1)
 
 #define MEMBRANE_UTIL_PARSE_BINARY_ARG(position, var_name) \
   MEMBRANE_UTIL_PARSE_ARG(position, var_name, ErlNifBinary var_name, enif_inspect_binary, &var_name)
 
 #define MEMBRANE_UTIL_PARSE_RESOURCE_ARG(position, var_name, handle_resource_type, pointer_to_var) \
   MEMBRANE_UTIL_PARSE_ARG(position, var_name, var_name, enif_get_resource, handle_resource_type, pointer_to_var)
-  
+
 
 // format encoding constants
 #define MEMBRANE_SAMPLE_FORMAT_TYPE ((uint32_t)(0b11 << 30))
