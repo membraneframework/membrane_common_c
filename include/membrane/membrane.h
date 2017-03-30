@@ -30,8 +30,11 @@
 #define MEMBRANE_UTIL_PARSE_BINARY_ARG(position, var_name) \
   MEMBRANE_UTIL_PARSE_ARG(position, var_name, ErlNifBinary var_name, enif_inspect_binary, &var_name)
 
-#define MEMBRANE_UTIL_PARSE_RESOURCE_ARG(position, var_name, handle_resource_type, pointer_to_var) \
-  MEMBRANE_UTIL_PARSE_ARG(position, var_name, var_name, enif_get_resource, handle_resource_type, pointer_to_var)
+#define MEMBRANE_UTIL_PARSE_RESOURCE_ARG(position, var_name, var_type, res_type) \
+  var_type * var_name; \
+  if(!enif_get_resource(env, argv[position], res_type, (void **) & var_name)) { \
+    return membrane_util_make_error_args(env, #var_name, "enif_get_resource"); \
+  }
 
 
 // format encoding constants
