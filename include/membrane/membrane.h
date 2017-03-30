@@ -9,22 +9,30 @@
 #endif
 
 // varargs parse helpers
-#define MEMBRANE_UTIL_ATOM_STRING_ENCODING ERL_NIF_LATIN1
-#define MEMBRANE_UTIL_ATOM_STRING_MAX_SIZE 20
-
-#define MEMBRANE_UTIL_PARSE_ARG(no, var, getter, ...) \
-  var; \
-  if(!getter(env, argv[no], __VA_ARGS__)) { \
-    return membrane_util_make_error_args(env, #var, #getter " error"); \
+#define MEMBRANE_UTIL_PARSE_ARG(position, var_name, var_def, getter, ...) \
+  var_def; \
+  if(!getter(env, argv[position], __VA_ARGS__)) { \
+    return membrane_util_make_error_args(env, #var_name, #getter " error"); \
   }
 
-#define MEMBRANE_UTIL_PARSE_UINT_ARG(no, var_name) MEMBRANE_UTIL_PARSE_ARG(no, unsigned int var_name, enif_get_uint, &var_name)
-#define MEMBRANE_UTIL_PARSE_INT_ARG(no, var_name) MEMBRANE_UTIL_PARSE_ARG(no, int var_name, enif_get_int, &var_name)
-#define MEMBRANE_UTIL_PARSE_ATOM_ARG(no, var_name) \
-  MEMBRANE_UTIL_PARSE_ARG(no, char var_name[MEMBRANE_UTIL_ATOM_STRING_MAX_SIZE], enif_get_atom, MEMBRANE_UTIL_ATOM_STRING_MAX_SIZE, MEMBRANE_UTIL_ATOM_STRING_ENCODING)
-#define MEMBRANE_UTIL_PARSE_BINARY_ARG(no, var_name) MEMBRANE_UTIL_PARSE_ARG(no, ErlNifBinary var_name, enif_inspect_binary, &var_name)
-#define MEMBRANE_UTIL_PARSE_RESOURCE_ARG(no, var, handle_resource_type, pointer_to_var) \
-  MEMBRANE_UTIL_PARSE_ARG(no, var, enif_get_resource, handle_resource_type, pointer_to_var)
+#define MEMBRANE_UTIL_PARSE_UINT_ARG(position, var_name) \
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, unsigned int var_name, enif_get_uint, &var_name)
+
+#define MEMBRANE_UTIL_PARSE_INT_ARG(position, var_name, var_name) \
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, int var_name, enif_get_int, &var_name)
+
+#define MEMBRANE_UTIL_PARSE_ATOM_ARG(position, var_name, var_name, max_size) \
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, char var_name[max_size], enif_get_atom, max_size, ERL_NIF_LATIN1)
+
+#define MEMBRANE_UTIL_PARSE_STRING_ARG(position, var_name, var_name, max_size) \
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, char var_name[max_size], enif_get_string, max_size, ERL_NIF_LATIN1)
+
+#define MEMBRANE_UTIL_PARSE_BINARY_ARG(position, var_name, var_name) \
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, ErlNifBinary var_name, enif_inspect_binary, &var_name)
+
+#define MEMBRANE_UTIL_PARSE_RESOURCE_ARG(position, var_name, var_name, handle_resource_type, pointer_to_var) \
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, var_name, enif_get_resource, handle_resource_type, pointer_to_var)
+
 
 // format encoding constants
 #define MEMBRANE_SAMPLE_FORMAT_TYPE ((uint32_t)(0b11 << 30))
