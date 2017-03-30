@@ -9,17 +9,17 @@
 #endif
 
 // varargs parse helpers
-#define MEMBRANE_UTIL_PARSE_ARG(position, var_name, var_def, getter, ...) \
+#define MEMBRANE_UTIL_PARSE_ARG(position, var_name, var_def, getter_func, ...) \
   var_def; \
-  if(!getter(env, argv[position], __VA_ARGS__)) { \
+  if(!getter_func(env, argv[position], &var_name, __VA_ARGS__)) { \
     return membrane_util_make_error_args(env, #var_name, #getter " error"); \
   }
 
 #define MEMBRANE_UTIL_PARSE_UINT_ARG(position, var_name) \
-  MEMBRANE_UTIL_PARSE_ARG(position, var_name, unsigned int var_name, enif_get_uint, &var_name)
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, unsigned int var_name, enif_get_uint)
 
 #define MEMBRANE_UTIL_PARSE_INT_ARG(position, var_name) \
-  MEMBRANE_UTIL_PARSE_ARG(position, var_name, int var_name, enif_get_int, &var_name)
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, int var_name, enif_get_int)
 
 #define MEMBRANE_UTIL_PARSE_ATOM_ARG(position, var_name, max_size) \
   MEMBRANE_UTIL_PARSE_ARG(position, var_name, char var_name[max_size], enif_get_atom, max_size, ERL_NIF_LATIN1)
@@ -28,7 +28,7 @@
   MEMBRANE_UTIL_PARSE_ARG(position, var_name, char var_name[max_size], enif_get_string, max_size, ERL_NIF_LATIN1)
 
 #define MEMBRANE_UTIL_PARSE_BINARY_ARG(position, var_name) \
-  MEMBRANE_UTIL_PARSE_ARG(position, var_name, ErlNifBinary var_name, enif_inspect_binary, &var_name)
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, ErlNifBinary var_name, enif_inspect_binary)
 
 #define MEMBRANE_UTIL_PARSE_RESOURCE_ARG(position, var_name, handle_resource_type, pointer_to_var) \
   MEMBRANE_UTIL_PARSE_ARG(position, var_name, var_name, enif_get_resource, handle_resource_type, pointer_to_var)
