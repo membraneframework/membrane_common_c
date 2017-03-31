@@ -1,0 +1,3 @@
+[submodule "c_src/c11-queues"]
+	path = c_src/c11-queues
+	url = git@github.com:membraneframework/c11-queues.git
