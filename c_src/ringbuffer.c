@@ -37,7 +37,9 @@
 /**
  * Initializes new ring buffer of given size.
  *
- * Size must be 2 exponent.
+ * It allows lock-free concurrent operation by one consumer and one producer.
+ *
+ * Size must be 2-exponent.
  *
  * It should be freed using membrane_ringbuffer_destroy after usage.
  */
