@@ -33,6 +33,7 @@ int membrane_ringbuffer_push_from_binary(MembraneRingBuffer* ringbuffer, ErlNifB
 size_t membrane_ringbuffer_get_capacity(MembraneRingBuffer* ringbuffer);
 size_t membrane_ringbuffer_get_available(MembraneRingBuffer* ringbuffer);
 MembraneRingBufferItem* membrane_ringbuffer_pull(MembraneRingBuffer* ringbuffer);
+void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer);
 void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer);
 
 MembraneRingBufferItem* membrane_ringbuffer_item_new_from_binary(ErlNifBinary* binary);

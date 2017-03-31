@@ -80,17 +80,24 @@ MembraneRingBufferItem* membrane_ringbuffer_pull(MembraneRingBuffer* ringbuffer)
 
 
 /**
- * Destroys given ring buffer.
- *
- * It includes destroying all items in the ring buffer.
+ * Pulls and destroys all items from the ring buffer.
  */
-void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer) {
-  // Destroy items in the queue
+void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer) {
   MembraneRingBufferItem *item = membrane_ringbuffer_pull(ringbuffer);
   while(item) {
     membrane_ringbuffer_item_destroy(item);
     item = membrane_ringbuffer_pull(ringbuffer);
   }
+}
+
+
+/**
+ * Destroys given ring buffer.
+ *
+ * It includes destroying all items in the ring buffer.
+ */
+void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer) {
+  membrane_ringbuffer_cleanup(ringbuffer);
 
   // Destroy the queue
   spsc_queue_destroy(ringbuffer->queue);
