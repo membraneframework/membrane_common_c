@@ -9,131 +9,74 @@
 /**
  * Initializes new ring buffer of given size.
  *
- * It allows lock-free concurrent operation by one consumer and one producer.
+ * Size must be power of 2.
  *
- * Size must be 2-exponent.
+ * It allows lock-free concurrent operation by one consumer and one producer.
  *
  * It should be freed using membrane_ringbuffer_destroy after usage.
  */
-MembraneRingBuffer* membrane_ringbuffer_new(size_t size) {
+MembraneRingBuffer* membrane_ringbuffer_new(size_t element_count, size_t element_size) {
   MembraneRingBuffer *ringbuffer = enif_alloc(sizeof(MembraneRingBuffer));
-  ringbuffer->queue = NULL;
-  ringbuffer->queue = spsc_queue_init(ringbuffer->queue, size, &memtype_heap);
+  ringbuffer->data = enif_alloc(element_count * element_size);
+  ringbuffer->ringbuffer = enif_alloc(sizeof(PaUtilRingBuffer));
+  if(PaUtil_InitializeRingBuffer(ringbuffer->ringbuffer, element_size, element_count, ringbuffer->data)) {
+      return NULL;
+  }
 
   return ringbuffer;
 }
 
 
 /**
- * Pushes an item to the ringbuffer.
+ * Writes at most `cnt` elements to the ringbuffer.
  *
- * Returns 1 if it was written properly, 0 otherwise.
+ * Returns the actual number of elements copied.
  */
-int membrane_ringbuffer_push(MembraneRingBuffer* ringbuffer, MembraneRingBufferItem* item) {
-  return spsc_queue_push_many(ringbuffer->queue, &item, 1);
+size_t membrane_ringbuffer_write(MembraneRingBuffer* ringbuffer, void *src, size_t cnt) {
+  return PaUtil_WriteRingBuffer(ringbuffer->ringbuffer, src, cnt);
 }
 
 
 /**
- * Pushes an item that is constructed upon erlang binary to the ringbuffer.
+ * Returns the number of ringbuffer's available elements for read.
+ */
+size_t membrane_ringbuffer_get_read_available(MembraneRingBuffer* ringbuffer) {
+  return PaUtil_GetRingBufferReadAvailable(ringbuffer->ringbuffer);
+}
+
+
+/**
+ * Returns the number of ringbuffer's available elements for write.
+ */
+size_t membrane_ringbuffer_get_write_available(MembraneRingBuffer* ringbuffer) {
+  return PaUtil_GetRingBufferWriteAvailable(ringbuffer->ringbuffer);
+}
+
+
+/**
+ * Reads at most `cnt` elements from the ringbuffer.
  *
- * Returns 1 if it was written properly, 0 otherwise.
+ * Returns the actual number of elements copied.
  */
-int membrane_ringbuffer_push_from_binary(MembraneRingBuffer* ringbuffer, ErlNifBinary* binary) {
-  MembraneRingBufferItem *item = membrane_ringbuffer_item_new_from_binary(binary);
-  // TODO constructor check
-
-  return membrane_ringbuffer_push(ringbuffer, item);
+size_t membrane_ringbuffer_read(MembraneRingBuffer* ringbuffer, void *dest, size_t cnt) {
+  return PaUtil_ReadRingBuffer(ringbuffer->ringbuffer, dest, cnt);
 }
 
 
 /**
- * Returns ringbuffer's capacity.
- */
-size_t membrane_ringbuffer_get_capacity(MembraneRingBuffer* ringbuffer) {
-  return ringbuffer->queue->capacity;
-}
-
-
-/**
- * Returns ringbuffer's available slots.
- */
-size_t membrane_ringbuffer_get_available(MembraneRingBuffer* ringbuffer) {
-  return (size_t) spsc_queue_available(ringbuffer->queue);
-}
-
-
-/**
- * Pulls one item from the ringbuffer.
- *
- * Returns item if it was read properly, NULL otherwise.
- */
-MembraneRingBufferItem* membrane_ringbuffer_pull(MembraneRingBuffer* ringbuffer) {
-  MembraneRingBufferItem* item = NULL;
-
-  if(spsc_queue_pull(ringbuffer->queue, &item) == 1) {
-    return item;
-  } else {
-    return NULL;
-  }
-}
-
-
-/**
- * Pulls and destroys all items from the ring buffer.
+ * Reset the read and write pointers to zero. This is not thread safe.
  */
 void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer) {
-  MembraneRingBufferItem *item = membrane_ringbuffer_pull(ringbuffer);
-  while(item) {
-    membrane_ringbuffer_item_destroy(item);
-    item = membrane_ringbuffer_pull(ringbuffer);
-  }
+  PaUtil_FlushRingBuffer(ringbuffer->ringbuffer);
 }
 
 
 /**
  * Destroys given ring buffer.
  *
- * It includes destroying all items in the ring buffer.
  */
 void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer) {
-  membrane_ringbuffer_cleanup(ringbuffer);
-
-  // Destroy the queue
-  spsc_queue_destroy(ringbuffer->queue);
-
-  // Destroy itself
+  enif_free(ringbuffer->ringbuffer);
+  enif_free(ringbuffer->data);
   enif_free(ringbuffer);
-}
-
-
-/**
- * Initializes new ring buffer item from given erlang binary.
- *
- * The data is copied from the binary so it is free to be released after
- * this operation.
- *
- * It should be freed using membrane_ringbuffer_item_destroy after usage.
- */
-MembraneRingBufferItem* membrane_ringbuffer_item_new_from_binary(ErlNifBinary* binary) {
-  MembraneRingBufferItem *item = enif_alloc(sizeof(MembraneRingBufferItem));
-  // TODO malloc error check
-
-  item->data = enif_alloc(binary->size);
-  memcpy(item->data, binary->data, binary->size);
-  item->size = binary->size;
-
-  return item;
-}
-
-
-/**
- * Destroys given ring buffer item.
- */
-void membrane_ringbuffer_item_destroy(MembraneRingBufferItem* item) {
-  // Destroy data in the item
-  enif_free(item->data);
-
-  // Destroy itself
-  enif_free(item);
 }

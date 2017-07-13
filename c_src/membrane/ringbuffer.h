@@ -10,33 +10,25 @@
 #include <stdio.h>
 #include <string.h>
 #include <erl_nif.h>
-#include "c11-queues/spsc_queue.h"
+#include "portaudio/pa_ringbuffer.h"
+
 
 typedef struct _MembraneRingBuffer MembraneRingBuffer;
 struct _MembraneRingBuffer
 {
-  struct spsc_queue *queue; // single producer/single consumer queue
+  struct PaUtilRingBuffer  *ringbuffer;
+  void                     *data;
+  size_t                    element_size;
 };
 
-
-typedef struct _MembraneRingBufferItem MembraneRingBufferItem;
-struct _MembraneRingBufferItem
-{
-  void   *data; // data itself
-  size_t  size; // length of the data
-};
-
-
-MembraneRingBuffer* membrane_ringbuffer_new(size_t size);
-int membrane_ringbuffer_push(MembraneRingBuffer* ringbuffer, MembraneRingBufferItem* item);
-int membrane_ringbuffer_push_from_binary(MembraneRingBuffer* ringbuffer, ErlNifBinary* binary);
-size_t membrane_ringbuffer_get_capacity(MembraneRingBuffer* ringbuffer);
-size_t membrane_ringbuffer_get_available(MembraneRingBuffer* ringbuffer);
-MembraneRingBufferItem* membrane_ringbuffer_pull(MembraneRingBuffer* ringbuffer);
+MembraneRingBuffer* membrane_ringbuffer_new(size_t element_count, size_t element_size);
+size_t membrane_ringbuffer_write(MembraneRingBuffer* ringbuffer, void *src, size_t cnt);
+size_t membrane_ringbuffer_get_write_available(MembraneRingBuffer* ringbuffer);
+size_t membrane_ringbuffer_get_read_available(MembraneRingBuffer* ringbuffer);
+size_t membrane_ringbuffer_read(MembraneRingBuffer* ringbuffer, void *dest, size_t cnt);
 void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer);
 void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer);
 
-MembraneRingBufferItem* membrane_ringbuffer_item_new_from_binary(ErlNifBinary* binary);
-void membrane_ringbuffer_item_destroy(MembraneRingBufferItem* item);
+
 
 #endif
