@@ -4,8 +4,10 @@ This package provides useful C routies common to many elements.
 
 # Authors
 
-- Marcin Lewandowski
-- Mateusz Front
+- Marcin Lewandowski marcin@radiokit.org
+- Mateusz Front mateusz.front@swmansion.com
+- Mateusz Nowak mateusz.nowak@swmansion.com
+- Filip Abramowicz filip@radiokit.org
 
 # License
 
