@@ -1,7 +1,6 @@
 #ifndef __MEMBRANE_H__
 #define __MEMBRANE_H__
 
-#include <stdio.h>
 #include <stdarg.h>
 #include <erl_nif.h>
 #ifdef __GNUC__
@@ -48,9 +47,6 @@
 #define MEMBRANE_SAMPLE_FORMAT_ENDIANITY_LE ((uint32_t)(0b0 << 29))
 #define MEMBRANE_SAMPLE_FORMAT_ENDIANITY_BE ((uint32_t)(0b1 << 29))
 
-
-
-#define MEMBRANE_DEBUG(message, ...) printf("[" MEMBRANE_LOG_TAG "] " message "\r\n", ##__VA_ARGS__);
 
 
 /**
