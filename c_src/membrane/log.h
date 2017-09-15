@@ -4,7 +4,7 @@
  * All Rights Reserved, (c) 2017 Matesz Nowak
  */
 
- #ifndef __MEMBRANE_LOG_H__
+#ifndef __MEMBRANE_LOG_H__
 #define __MEMBRANE_LOG_H__
 
 #include <stdio.h>
