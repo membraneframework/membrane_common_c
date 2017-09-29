@@ -76,7 +76,8 @@ int membrane_log_format(ErlNifEnv *env, int level, const char *format, ...) {
 
   // create tags_term
   nif_tag = enif_make_atom(used_env, "nif");
-  tags_term = enif_make_list1(used_env, nif_tag);
+  element_tag = enif_make_atom(used_env, MEMBRANE_DEFAULT_TAG)
+  tags_term = enif_make_list2(used_env, nif_tag, element_tag);
 
   int ret = membrane_log(env, msg_env, level, bin_term, tags_term);
 
