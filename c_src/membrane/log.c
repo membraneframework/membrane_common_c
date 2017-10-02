@@ -49,7 +49,7 @@ int membrane_log_format(ErlNifEnv *env, int level, const char *format, ...) {
   va_list args;
   unsigned char* binary_data;
   ErlNifEnv *used_env, *msg_env;
-  ERL_NIF_TERM bin_term, tags_term, nif_tag;
+  ERL_NIF_TERM bin_term, tags_term, nif_tag, element_tag;
 
   // check if received process-bound or process-independent environment
   if(env) {
