@@ -124,7 +124,6 @@ static int membrane_route_log(ErlNifEnv *env, ErlNifEnv *msg_env, ERL_NIF_TERM t
   } else {
     router_module = enif_make_atom(msg_env, "Elixir.Membrane.Log.Router");
   }
-
   if(enif_whereis_pid(env, router_module, &router_pid)) {
     // router_pid found
     if (enif_send(env, &router_pid, msg_env, term)) {
@@ -142,12 +141,14 @@ static int membrane_route_log(ErlNifEnv *env, ErlNifEnv *msg_env, ERL_NIF_TERM t
  * It also supplies message with current monotonic time.
  */
 static ERL_NIF_TERM membrane_wrap_log_msg(ErlNifEnv *env, int level, ERL_NIF_TERM message_term, ERL_NIF_TERM tags_term) {
-  ErlNifTime monotonic_time;
-  ERL_NIF_TERM time_term;
 
-  monotonic_time = enif_monotonic_time(ERL_NIF_NSEC);
-  time_term = enif_make_long(env, monotonic_time);
+  time_t raw_time = time(NULL);
+  struct tm * current_time = localtime(&raw_time);
+  char time_iso8601[255];
+  char format[] = "%Y-%m-%dT%H:%M:%SZ";
+  strftime(time_iso8601, 255, format, current_time);
 
+  ERL_NIF_TERM time_term = enif_make_string(env, time_iso8601, ERL_NIF_LATIN1);
 
   ERL_NIF_TERM output_term = enif_make_tuple5(
     env,

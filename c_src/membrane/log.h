@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <erl_nif.h>
 #include <stdarg.h>
+#include <time.h>
 
 #define MEMBRANE_LOG_LEVEL_DEBUG 0
 #define MEMBRANE_LOG_LEVEL_INFO 1
