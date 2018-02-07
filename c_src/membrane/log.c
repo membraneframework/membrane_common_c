@@ -45,7 +45,7 @@ int membrane_log(ErlNifEnv *env, ErlNifEnv *msg_env, int level, ERL_NIF_TERM mes
  *
  * On success, returns true. Otherwise, false is returned.
  */
-int membrane_log_format(ErlNifEnv *env, int level, const char *format, ...) {
+int membrane_log_format(ErlNifEnv *env, int level, const char* log_tag, const char *format, ...) {
   va_list args;
   unsigned char* binary_data;
   ErlNifEnv *used_env, *msg_env;
@@ -76,7 +76,7 @@ int membrane_log_format(ErlNifEnv *env, int level, const char *format, ...) {
 
   // create tags_term
   nif_tag = enif_make_atom(used_env, "nif");
-  element_tag = enif_make_atom(used_env, MEMBRANE_DEFAULT_TAG);
+  element_tag = enif_make_atom(used_env, log_tag);
   tags_term = enif_make_list2(used_env, nif_tag, element_tag);
 
   int ret = membrane_log(env, msg_env, level, bin_term, tags_term);
