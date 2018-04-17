@@ -6,14 +6,14 @@ defmodule Membrane.Common.C.Mixfile do
     [
       app: :membrane_common_c,
       version: "0.0.1",
-      elixir: "~> 1.3",
+      elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env),
+      compilers: [:bundlex] ++ Mix.compilers,
       description: "Membrane Multimedia Framework (C language common routines)",
-      maintainers: ["Marcin Lewandowski"],
+      maintainers: ["Membrane Team"],
       licenses: ["LGPL"],
       name: "Membrane Common: C",
       source_url: "https://bitbucket.com/radiokit/membrane-common-c",
-      preferred_cli_env: [espec: :test],
       deps: deps()
    ]
   end
@@ -24,7 +24,7 @@ defmodule Membrane.Common.C.Mixfile do
 
   defp deps() do
     [
-      {:bundlex, git: "git@github.com:radiokit/bundlex.git", branch: "feature/deps"}
+      {:bundlex, git: "git@github.com:radiokit/bundlex.git"}
     ]
   end
 end
