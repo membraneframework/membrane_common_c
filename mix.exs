@@ -11,9 +11,9 @@ defmodule Membrane.Common.C.Mixfile do
       compilers: [:bundlex] ++ Mix.compilers,
       description: "Membrane Multimedia Framework (C language common routines)",
       maintainers: ["Membrane Team"],
-      licenses: ["LGPL"],
+      licenses: ["Apache 2.0"],
       name: "Membrane Common: C",
-      source_url: "https://bitbucket.com/radiokit/membrane-common-c",
+      source_url: "https://github.com/membraneframework/membrane-common-c",
       deps: deps()
    ]
   end
