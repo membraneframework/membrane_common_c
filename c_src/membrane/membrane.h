@@ -48,49 +48,12 @@
 #define MEMBRANE_SAMPLE_FORMAT_ENDIANITY_BE ((uint32_t)(0b1 << 29))
 
 
-
-/**
- * Builds `{:error, reason}`.
- */
 ERL_NIF_TERM membrane_util_make_error(ErlNifEnv* env, ERL_NIF_TERM reason);
-
-
-/**
- * Builds `{:ok, arg}`.
- */
 ERL_NIF_TERM membrane_util_make_ok_tuple(ErlNifEnv* env, ERL_NIF_TERM arg);
-
-
-/**
- * Builds `{:ok, arg1, arg2}`.
- */
 ERL_NIF_TERM membrane_util_make_ok_tuple2(ErlNifEnv* env, ERL_NIF_TERM arg1, ERL_NIF_TERM arg2);
-
-
-/**
- * Builds `:ok`.
- */
 ERL_NIF_TERM membrane_util_make_ok(ErlNifEnv* env);
-
-
-/**
- * Builds `:todo`.
- */
 ERL_NIF_TERM membrane_util_make_todo(ErlNifEnv* env);
-
-
-/**
- * Builds `{:error, {:args, field, description}}` for returning when
- * certain constructor-style functions get invalid arguments.
- */
 ERL_NIF_TERM membrane_util_make_error_args(ErlNifEnv* env, const char* field, const char *description);
-
-
-/**
- * Builds `{:error, {:internal, reason}}` for returning when certain
- * constructor-style functions fails on internal stuff that should generally
- * speaking, not fail.
- */
 ERL_NIF_TERM membrane_util_make_error_internal(ErlNifEnv* env, const char* reason);
 
 #endif
