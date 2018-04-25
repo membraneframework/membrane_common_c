@@ -7,20 +7,19 @@ defmodule Membrane.Common.C.Mixfile do
       app: :membrane_common_c,
       version: "0.0.1",
       elixir: "~> 1.6",
-      elixirc_paths: elixirc_paths(Mix.env),
-      compilers: [:bundlex] ++ Mix.compilers,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: [:bundlex] ++ Mix.compilers(),
       description: "Membrane Multimedia Framework (C language common routines)",
       maintainers: ["Membrane Team"],
       licenses: ["Apache 2.0"],
       name: "Membrane Common: C",
       source_url: "https://github.com/membraneframework/membrane-common-c",
       deps: deps()
-   ]
+    ]
   end
 
-
   defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_),     do: ["lib"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp deps() do
     [
