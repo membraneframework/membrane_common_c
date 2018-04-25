@@ -3,11 +3,11 @@ defmodule Membrane.Common.C.BundlexProject do
 
   def project do
     [
-      nif: nif(Bundlex.platform())
+      nifs: nifs(Bundlex.platform())
     ]
   end
 
-  defp nif(_platform) do
+  defp nifs(_platform) do
     [
       membrane: [
         export_only?: Mix.env() != :test,

@@ -1,4 +1,4 @@
 %{
-  "bundlex": {:git, "git@github.com:radiokit/bundlex.git", "1dafa33304c8e4f35702d13e97603a96621edac2", []},
+  "bundlex": {:git, "git@github.com:radiokit/bundlex.git", "9cf863f6ddf83967369d00ebf7f21b83310bac1b", []},
   "porcelain": {:hex, :porcelain, "2.0.3", "2d77b17d1f21fed875b8c5ecba72a01533db2013bd2e5e62c6d286c029150fdc", [:mix], []},
 }
