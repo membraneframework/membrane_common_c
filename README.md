@@ -1,17 +1,14 @@
 # Membrane Multimedia Framework: Common C Routines
 
-This package provides useful C routies common to many elements.
+This package provides useful C routines common to many elements utilizing native modules.
 
-# Authors
-
-- Marcin Lewandowski marcin@radiokit.org
-- Mateusz Front mateusz.front@swmansion.com
-- Mateusz Nowak mateusz.nowak@swmansion.com
-- Filip Abramowicz filip@radiokit.org
+Following Bundlex dependencies are exported:
+* `membrane` - helpers, logging functions and macros
+* `membrane_ringbuffer` - supplies ringbuffer utility
 
 # License
 
-Generally speaking MIT, but it contains parts of 
+Generally speaking Apache 2.0, but it contains parts of
 [PortAudio](http://www.portaudio.org).
 
 ```
@@ -29,7 +26,7 @@ and
  * modified for SMP safety on Mac OS X by Bjorn Roche
  * modified for SMP safety on Linux by Leland Lucius
  * also, allowed for const where possible
- * modified for multiple-byte-sized data elements by Sven Fischer 
+ * modified for multiple-byte-sized data elements by Sven Fischer
 ```
 
 
