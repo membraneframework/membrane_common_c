@@ -35,6 +35,9 @@
     return membrane_util_make_error_args(env, #var_name, "enif_get_resource"); \
   }
 
+#define MEMBRANE_UTIL_PARSE_PID_ARG(position, var_name) \
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, ErlNifPid var_name, enif_get_local_pid, &var_name)
+
 
 // format encoding constants
 #define MEMBRANE_SAMPLE_FORMAT_TYPE ((uint32_t)(0b11 << 30))
