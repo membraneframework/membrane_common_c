@@ -1,4 +1,4 @@
 %{
-  "bundlex": {:git, "git@github.com:radiokit/bundlex.git", "9cf863f6ddf83967369d00ebf7f21b83310bac1b", []},
-  "porcelain": {:hex, :porcelain, "2.0.3", "2d77b17d1f21fed875b8c5ecba72a01533db2013bd2e5e62c6d286c029150fdc", [:mix], []},
+  "bundlex": {:git, "git@github.com:radiokit/bundlex.git", "78f8f42f8c3ec497680dd2f036619961b64d47f3", []},
+  "porcelain": {:hex, :porcelain, "2.0.3", "2d77b17d1f21fed875b8c5ecba72a01533db2013bd2e5e62c6d286c029150fdc", [:mix], [], "hexpm"},
 }

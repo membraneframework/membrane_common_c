@@ -10,8 +10,7 @@ defmodule Membrane.Common.C.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:bundlex] ++ Mix.compilers(),
       description: "Membrane Multimedia Framework (C language common routines)",
-      maintainers: ["Membrane Team"],
-      licenses: ["Apache 2.0"],
+      package: package(),
       name: "Membrane Common: C",
       source_url: "https://github.com/membraneframework/membrane-common-c",
       deps: deps()
@@ -20,6 +19,13 @@ defmodule Membrane.Common.C.Mixfile do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp package do
+    [
+      maintainers: ["Membrane Team"],
+      licenses: ["Apache 2.0"]
+    ]
+  end
 
   defp deps() do
     [
