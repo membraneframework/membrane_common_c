@@ -1,11 +1,7 @@
+#pragma once
 /**
  * Membrane Common C routines: Logging.
- *
- * All Rights Reserved, (c) 2017 Matesz Nowak
  */
-
-#ifndef __MEMBRANE_LOG_H__
-#define __MEMBRANE_LOG_H__
 
 #include <stdio.h>
 #include <erl_nif.h>
@@ -32,5 +28,3 @@
 int membrane_log(ErlNifEnv *env, ErlNifEnv *msg_env, int level, ERL_NIF_TERM message, ERL_NIF_TERM tags);
 int membrane_log_format(ErlNifEnv *env, int level, const char *log_tag, const char *format, ...);
 ERL_NIF_TERM membrane_log_level_to_term(ErlNifEnv *env, int level);
-
-#endif

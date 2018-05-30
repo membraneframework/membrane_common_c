@@ -1,5 +1,4 @@
-#ifndef __MEMBRANE_H__
-#define __MEMBRANE_H__
+#pragma once
 
 #include <stdarg.h>
 #include <erl_nif.h>
@@ -58,5 +57,3 @@ ERL_NIF_TERM membrane_util_make_ok(ErlNifEnv* env);
 ERL_NIF_TERM membrane_util_make_todo(ErlNifEnv* env);
 ERL_NIF_TERM membrane_util_make_error_args(ErlNifEnv* env, const char* field, const char *description);
 ERL_NIF_TERM membrane_util_make_error_internal(ErlNifEnv* env, const char* reason);
-
-#endif

@@ -1,9 +1,8 @@
+#pragma once
 /**
  * Membrane Common C routines: RingBuffer.
  */
 
-#ifndef __MEMBRANE_RINGBUFFER_H__
-#define __MEMBRANE_RINGBUFFER_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,5 +28,3 @@ size_t membrane_ringbuffer_read(MembraneRingBuffer* ringbuffer, void *dest, size
 void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer);
 void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer);
 
-
-#endif
