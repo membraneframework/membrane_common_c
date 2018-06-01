@@ -1,27 +1,28 @@
 /**
  * Membrane Common C routines: RingBuffer.
- *
- * All Rights Reserved, (c) 2016 Marcin Lewandowski
  */
-
 #include "ringbuffer.h"
 
 /**
  * Initializes new ring buffer of given size.
  *
- * Size must be power of 2.
- *
  * It allows lock-free concurrent operation by one consumer and one producer.
  *
  * It should be freed using membrane_ringbuffer_destroy after usage.
  */
-MembraneRingBuffer* membrane_ringbuffer_new(size_t element_count, size_t element_size) {
+MembraneRingBuffer* membrane_ringbuffer_new(size_t max_elements, size_t element_size) {
   MembraneRingBuffer *ringbuffer = enif_alloc(sizeof(MembraneRingBuffer));
-  ringbuffer->data = enif_alloc(element_count * element_size);
-  ringbuffer->ringbuffer = enif_alloc(sizeof(PaUtilRingBuffer));
-  if(PaUtil_InitializeRingBuffer(ringbuffer->ringbuffer, element_size, element_count, ringbuffer->data)) {
-      return NULL;
-  }
+  ringbuffer->buffer = enif_alloc(max_elements * element_size);
+  /*
+   * write_index and read_index will be kept modulo (max_elements * 2)
+   * while actual indices for read/write will be calculated using modulo (max_elements)
+   * This will allow to get difference between indices equal to max_elements
+   * and distinguish full buffer from empty buffer
+   */
+  ringbuffer->read_index = 0;
+  ringbuffer->write_index = 0;
+  ringbuffer->element_size = element_size;
+  ringbuffer->max_elements = max_elements;
 
   return ringbuffer;
 }
@@ -33,7 +34,34 @@ MembraneRingBuffer* membrane_ringbuffer_new(size_t element_count, size_t element
  * Returns the actual number of elements copied.
  */
 size_t membrane_ringbuffer_write(MembraneRingBuffer* ringbuffer, void *src, size_t cnt) {
-  return PaUtil_WriteRingBuffer(ringbuffer->ringbuffer, src, cnt);
+  size_t available = membrane_ringbuffer_get_write_available(ringbuffer);
+  cnt = cnt > available ? available : cnt;
+
+  size_t write_index = atomic_load_explicit(&ringbuffer->write_index, memory_order_relaxed);
+  size_t index = write_index % ringbuffer->max_elements;
+  void * dest = ringbuffer->buffer + (index * ringbuffer->element_size);
+  // if the write will not be contiguous
+  if (index + cnt > ringbuffer->max_elements) {
+    size_t tail_items = ringbuffer->max_elements - index;
+
+    size_t copy_size = tail_items * ringbuffer->element_size;
+    memcpy(dest, src, copy_size);
+
+    dest = ringbuffer->buffer;
+    src  = src + (copy_size * ringbuffer->element_size);
+    copy_size = (cnt - tail_items) * ringbuffer->element_size;
+    memcpy(dest, src, copy_size);
+  } else {
+    size_t copy_size = cnt * ringbuffer->element_size;
+    memcpy(dest, src, copy_size);
+  }
+
+  atomic_store_explicit(
+    &ringbuffer->write_index,
+    (write_index + cnt) % (ringbuffer->max_elements * 2),
+    memory_order_release
+  );
+  return cnt;
 }
 
 
@@ -41,7 +69,11 @@ size_t membrane_ringbuffer_write(MembraneRingBuffer* ringbuffer, void *src, size
  * Returns the number of ringbuffer's available elements for read.
  */
 size_t membrane_ringbuffer_get_read_available(MembraneRingBuffer* ringbuffer) {
-  return PaUtil_GetRingBufferReadAvailable(ringbuffer->ringbuffer);
+  size_t wi = atomic_load_explicit(&ringbuffer->write_index, memory_order_relaxed);
+  size_t ri = atomic_load_explicit(&ringbuffer->read_index, memory_order_relaxed);
+  size_t modulo = (ringbuffer->max_elements * 2);
+  // we need to make sure the difference is not negative to avoid unsigned integer underflow
+  return (wi + modulo - ri) % modulo;
 }
 
 
@@ -49,7 +81,7 @@ size_t membrane_ringbuffer_get_read_available(MembraneRingBuffer* ringbuffer) {
  * Returns the number of ringbuffer's available elements for write.
  */
 size_t membrane_ringbuffer_get_write_available(MembraneRingBuffer* ringbuffer) {
-  return PaUtil_GetRingBufferWriteAvailable(ringbuffer->ringbuffer);
+  return ringbuffer->max_elements - membrane_ringbuffer_get_read_available(ringbuffer);
 }
 
 
@@ -59,7 +91,34 @@ size_t membrane_ringbuffer_get_write_available(MembraneRingBuffer* ringbuffer) {
  * Returns the actual number of elements copied.
  */
 size_t membrane_ringbuffer_read(MembraneRingBuffer* ringbuffer, void *dest, size_t cnt) {
-  return PaUtil_ReadRingBuffer(ringbuffer->ringbuffer, dest, cnt);
+  size_t available = membrane_ringbuffer_get_read_available(ringbuffer);
+  cnt = cnt > available ? available : cnt;
+
+  size_t read_index = atomic_load_explicit(&ringbuffer->read_index, memory_order_relaxed);
+  size_t index = read_index % ringbuffer->max_elements;
+  void * src = ringbuffer->buffer + (index * ringbuffer->element_size);
+  // if the read will not be contiguous
+  if (index + cnt > ringbuffer->max_elements) {
+    size_t tail_items = ringbuffer->max_elements - index;
+
+    size_t copy_size = tail_items * ringbuffer->element_size;
+    memcpy(dest, src, copy_size);
+
+    dest = ringbuffer->buffer;
+    src  = src + (copy_size * ringbuffer->element_size);
+    copy_size = (cnt - tail_items) * ringbuffer->element_size;
+    memcpy(dest, src, copy_size);
+  } else {
+    size_t copy_size = cnt * ringbuffer->element_size;
+    memcpy(dest, src, copy_size);
+  }
+
+  atomic_store_explicit(
+    &ringbuffer->read_index,
+    (read_index + cnt) % (ringbuffer->max_elements * 2),
+    memory_order_release
+  );
+  return cnt;
 }
 
 
@@ -67,7 +126,8 @@ size_t membrane_ringbuffer_read(MembraneRingBuffer* ringbuffer, void *dest, size
  * Reset the read and write pointers to zero. This is not thread safe.
  */
 void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer) {
-  PaUtil_FlushRingBuffer(ringbuffer->ringbuffer);
+  ringbuffer->write_index = 0;
+  ringbuffer->read_index = 0;
 }
 
 
@@ -76,7 +136,6 @@ void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer) {
  *
  */
 void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer) {
-  enif_free(ringbuffer->ringbuffer);
-  enif_free(ringbuffer->data);
+  enif_free(ringbuffer->buffer);
   enif_free(ringbuffer);
 }
