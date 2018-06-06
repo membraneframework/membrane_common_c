@@ -28,16 +28,23 @@ MembraneRingBuffer* membrane_ringbuffer_new(size_t max_elements, size_t element_
 }
 
 
+static inline size_t calc_read_available(MembraneRingBuffer* rb, size_t read_index, size_t write_index) {
+  size_t modulo = (rb->max_elements * 2);
+  // we need to make sure the difference is not negative to avoid unsigned integer underflow
+  return (write_index + modulo - read_index) % modulo;
+}
+
 /**
  * Writes at most `cnt` elements to the ringbuffer.
  *
  * Returns the actual number of elements copied.
  */
 size_t membrane_ringbuffer_write(MembraneRingBuffer* ringbuffer, void *src, size_t cnt) {
-  size_t available = membrane_ringbuffer_get_write_available(ringbuffer);
+  size_t read_index = atomic_load_explicit(&ringbuffer->read_index, memory_order_acquire);
+  size_t write_index = atomic_load_explicit(&ringbuffer->write_index, memory_order_relaxed);
+  size_t available = ringbuffer->max_elements - calc_read_available(ringbuffer, read_index, write_index);
   cnt = cnt > available ? available : cnt;
 
-  size_t write_index = atomic_load_explicit(&ringbuffer->write_index, memory_order_relaxed);
   size_t index = write_index % ringbuffer->max_elements;
   void * dest = ringbuffer->buffer + (index * ringbuffer->element_size);
   // if the write will not be contiguous
@@ -71,9 +78,7 @@ size_t membrane_ringbuffer_write(MembraneRingBuffer* ringbuffer, void *src, size
 size_t membrane_ringbuffer_get_read_available(MembraneRingBuffer* ringbuffer) {
   size_t wi = atomic_load_explicit(&ringbuffer->write_index, memory_order_relaxed);
   size_t ri = atomic_load_explicit(&ringbuffer->read_index, memory_order_relaxed);
-  size_t modulo = (ringbuffer->max_elements * 2);
-  // we need to make sure the difference is not negative to avoid unsigned integer underflow
-  return (wi + modulo - ri) % modulo;
+  return calc_read_available(ringbuffer, ri, wi);
 }
 
 
@@ -91,10 +96,11 @@ size_t membrane_ringbuffer_get_write_available(MembraneRingBuffer* ringbuffer) {
  * Returns the actual number of elements copied.
  */
 size_t membrane_ringbuffer_read(MembraneRingBuffer* ringbuffer, void *dest, size_t cnt) {
-  size_t available = membrane_ringbuffer_get_read_available(ringbuffer);
+  size_t write_index = atomic_load_explicit(&ringbuffer->write_index, memory_order_acquire);
+  size_t read_index = atomic_load_explicit(&ringbuffer->read_index, memory_order_relaxed);
+  size_t available = calc_read_available(ringbuffer, read_index, write_index);
   cnt = cnt > available ? available : cnt;
 
-  size_t read_index = atomic_load_explicit(&ringbuffer->read_index, memory_order_relaxed);
   size_t index = read_index % ringbuffer->max_elements;
   void * src = ringbuffer->buffer + (index * ringbuffer->element_size);
   // if the read will not be contiguous
