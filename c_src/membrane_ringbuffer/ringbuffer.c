@@ -28,10 +28,10 @@ MembraneRingBuffer* membrane_ringbuffer_new(size_t max_elements, size_t element_
 }
 
 
-static inline size_t calc_read_available(MembraneRingBuffer* rb, size_t ri, size_t wi) {
+static inline size_t calc_read_available(MembraneRingBuffer* rb, size_t read_index, size_t write_index) {
   size_t modulo = (rb->max_elements * 2);
   // we need to make sure the difference is not negative to avoid unsigned integer underflow
-  return (wi + modulo - ri) % modulo;
+  return (write_index + modulo - read_index) % modulo;
 }
 
 /**
