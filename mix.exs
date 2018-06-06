@@ -11,9 +11,9 @@ defmodule Membrane.Common.C.Mixfile do
       compilers: [:bundlex] ++ Mix.compilers(),
       description: "Membrane Multimedia Framework (C language common routines)",
       package: package(),
-      name: "Membrane Common: C",
+      name: "Membrane: Common C",
       source_url: link(),
-      homepage_url: "https://membraneframework.org",
+      docs: docs(),
       deps: deps()
     ]
   end
@@ -29,13 +29,24 @@ defmodule Membrane.Common.C.Mixfile do
     [
       maintainers: ["Membrane Team"],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => link()}
+      links: %{
+        "GitHub" => link(),
+        "Membrane Framework Homepage" => "https://membraneframework.org"
+      }
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md"]
     ]
   end
 
   defp deps() do
     [
-      {:bundlex, git: "git@github.com:radiokit/bundlex.git"}
+      {:ex_doc, "~> 0.18", only: :dev, runtime: false},
+      {:bundlex, "~> 0.1"}
     ]
   end
 end
