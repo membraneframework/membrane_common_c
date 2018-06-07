@@ -1,5 +1,7 @@
 # Membrane Multimedia Framework: Common C Routines
 
+[![Build Status](https://travis-ci.com/membraneframework/membrane-common-c.svg?branch=master)](https://travis-ci.com/membraneframework/membrane-common-c)
+
 This package provides useful C routines common to many elements utilizing native modules.
 
 It is part of [Membrane Framework](https://membraneframework.org/)
