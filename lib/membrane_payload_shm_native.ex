@@ -13,4 +13,7 @@ defmodule Membrane.Payload.Shm.Native do
 
   @spec read(name :: String.t(), size :: non_neg_integer()) :: Type.try_t(binary())
   defnif read(name, size)
+
+  @spec split_at(name :: String.t(), size :: non_neg_integer, name_created :: String.t(), position :: non_neg_integer()) :: Type.try_t(reference())
+  defnif split_at(name, size, name_created, position)
 end

@@ -1,6 +1,8 @@
 %{
-  "bundlex": {:hex, :bundlex, "0.1.0", "f6e5b546b68f65025f4f0b9da1a70b5b81104b4242433376b8956bb23139e97d", [:mix], [{:porcelain, "~> 2.0", [hex: :porcelain, repo: "hexpm", optional: false]}], "hexpm"},
+  "bundlex": {:hex, :bundlex, "0.1.2", "3ff76e4d69aab81a9a279c6c2dfdad77063ae118af9d7418f3b3c411be537610", [:mix], [{:porcelain, "~> 2.0", [hex: :porcelain, repo: "hexpm", optional: false]}], "hexpm"},
   "earmark": {:hex, :earmark, "1.2.5", "4d21980d5d2862a2e13ec3c49ad9ad783ffc7ca5769cf6ff891a4553fbaae761", [:mix], [], "hexpm"},
   "ex_doc": {:hex, :ex_doc, "0.18.3", "f4b0e4a2ec6f333dccf761838a4b253d75e11f714b85ae271c9ae361367897b7", [:mix], [{:earmark, "~> 1.1", [hex: :earmark, repo: "hexpm", optional: false]}], "hexpm"},
+  "membrane_core": {:git, "git@github.com:membraneframework/membrane-core.git", "972c1dd81bb8797a5d7c5b23a381c6c2f7839a97", [branch: "feature/payload-types"]},
   "porcelain": {:hex, :porcelain, "2.0.3", "2d77b17d1f21fed875b8c5ecba72a01533db2013bd2e5e62c6d286c029150fdc", [:mix], [], "hexpm"},
+  "qex": {:hex, :qex, "0.3.4", "92fba2ca8fa162d4619d572ec6d9124f47564a5c8dd1e252147c29d3435d2608", [:mix], [], "hexpm"},
 }
