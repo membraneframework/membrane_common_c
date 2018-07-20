@@ -2,9 +2,13 @@
 
 #include <stdarg.h>
 #include <erl_nif.h>
+#include <string.h>
+#include <errno.h>
 #ifdef __GNUC__
 #include <stdint.h>
 #endif
+
+#define UNUSED(x) (void)(x)
 
 // varargs parse helpers
 #define MEMBRANE_UTIL_PARSE_ARG(position, var_name, var_def, getter_func, ...) \
@@ -56,4 +60,5 @@ ERL_NIF_TERM membrane_util_make_ok_tuple2(ErlNifEnv* env, ERL_NIF_TERM arg1, ERL
 ERL_NIF_TERM membrane_util_make_ok(ErlNifEnv* env);
 ERL_NIF_TERM membrane_util_make_todo(ErlNifEnv* env);
 ERL_NIF_TERM membrane_util_make_error_args(ErlNifEnv* env, const char* field, const char *description);
+ERL_NIF_TERM membrane_util_make_error_errno(ErlNifEnv* env, const char* call);
 ERL_NIF_TERM membrane_util_make_error_internal(ErlNifEnv* env, const char* reason);
