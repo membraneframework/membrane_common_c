@@ -65,8 +65,10 @@ defimpl Membrane.Payload, for: Membrane.Payload.Shm do
     {Shm.empty(), shm}
   end
 
-  def split_at(%Shm{name: name} = shm, at_pos) do
-    {%Shm{shm | size: at_pos}, }
+  def split_at(%Shm{name: name, size: size} = shm, at_pos) do
+    new_name = name <> "-2"
+    {:ok, new_guard} = Shm.Native.split_at(name, size, new_name, at_pos)
+    {%Shm{shm | size: at_pos}, %Shm{name: new_name, size: size - at_pos, capacity: size - at_pos, guard: new_guard}}
   end
 
   @spec from_binary(binary()) :: Shm.t()

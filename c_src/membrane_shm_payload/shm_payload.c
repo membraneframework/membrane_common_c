@@ -20,32 +20,45 @@ int load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info) {
 }
 
 int create(ErlNifEnv* env, ErlNifBinary * name, unsigned capacity, int *fd, ERL_NIF_TERM *return_term) {
+  int ret_val;
+  char * name_cstr = NULL;
   if (name->size > NAME_MAX) {
     *return_term = membrane_util_make_error_args(env, "name", "Name to long");
-    return -1;
+    ret_val = -1;
+    goto exit_create;
   }
 
-  ShmGuard *guard = enif_alloc_resource(RES_SHM_PAYLOAD_GUARD_TYPE, sizeof(*guard));
-  strncpy(guard->name, (char *) name->data, name->size);
-  guard->name[name->size] = '\0';
+  name_cstr = malloc(name->size);
+  strncpy(name_cstr, (char *) name->data, name->size);
+  name_cstr[name->size] = '\0';
 
-  ERL_NIF_TERM guard_term = enif_make_resource(env, guard);
-  enif_release_resource(guard);
-
-  *fd = shm_open(guard->name, O_RDWR | O_CREAT | O_EXCL, 0666);
+  *fd = shm_open(name_cstr, O_RDWR | O_CREAT | O_EXCL, 0666);
   if (*fd < 0) {
     *return_term = membrane_util_make_error_errno(env, "shm_open");
-    return -1;
+    ret_val = -1;
+    goto exit_create;
   }
 
   int res = ftruncate(*fd, capacity);
   if (res < 0) {
     *return_term = membrane_util_make_error_errno(env, "ftruncate");
-    return -1;
+    ret_val = -1;
+    goto exit_create;
   }
 
+  ShmGuard *guard = enif_alloc_resource(RES_SHM_PAYLOAD_GUARD_TYPE, sizeof(*guard));
+  strncpy(guard->name, name_cstr, name->size+1);
+  guard->name[name->size] = '\0';
+  ERL_NIF_TERM guard_term = enif_make_resource(env, guard);
+  enif_release_resource(guard);
+
   *return_term = membrane_util_make_ok_tuple(env, guard_term);
-  return 0;
+  ret_val = 0;
+exit_create:
+  if (name_cstr != NULL) {
+    free(name_cstr);
+  }
+  return ret_val;
 }
 
 static ERL_NIF_TERM export_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -92,6 +105,7 @@ static ERL_NIF_TERM export_set_capacity(ErlNifEnv* env, int argc, const ERL_NIF_
   ERL_NIF_TERM return_term;
   int fd = -1;
 
+//FIXME: data might not be NULL terminated
   fd = shm_open((char *) name.data, O_RDWR, 0666);
   if (fd < 0) {
     return_term = membrane_util_make_error_errno(env, "shm_open");
@@ -119,14 +133,14 @@ static int open_and_mmap(ErlNifEnv * env, ErlNifBinary * name, unsigned size, ch
   name_cstr[name->size] = '\0';
   int result = 0;
 
-  fd = shm_open(name_cstr, O_RDONLY, 0666);
+  fd = shm_open(name_cstr, O_RDWR, 0666);
   if (fd < 0) {
     *return_term = membrane_util_make_error_errno(env, "shm_open");
     result = -1;
     goto open_and_mmap_exit;
   }
 
-  *content = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+  *content = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (MAP_FAILED == content) {
     *return_term = membrane_util_make_error_errno(env, "mmap");
     result = -1;
