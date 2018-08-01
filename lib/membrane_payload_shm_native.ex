@@ -1,19 +1,31 @@
 defmodule Membrane.Payload.Shm.Native do
+  alias Membrane.Payload.Shm
+  import Shm
   alias Membrane.Type
   use Bundlex.Loader, nif: :membrane_shm_payload
 
-  @spec create(name :: String.t(), capacity :: pos_integer()) :: Type.try_t(reference())
-  defnif create(name, capacity \\ 4096)
+  @spec create(payload_record :: Shm.t()) :: Type.try_t(Shm.t())
+  defnif create(payload_record)
 
-  @spec create_and_init(name :: String.t(), data :: binary()) :: Type.try_t(reference())
-  defnif create_and_init(name, data)
+  @spec create_and_init(payload_record :: Shm.t(), data :: binary()) :: Type.try_t(Shm.t())
+  defnif create_and_init(payload_record, data)
 
-  @spec set_capacity(name :: String.t(), capacity :: pos_integer()) :: Type.try_t()
-  defnif set_capacity(name, capacity)
+  @spec set_capacity(payload_record :: Shm.t(), capacity :: pos_integer()) :: Type.try_t()
+  defnif set_capacity(payload_record, capacity)
 
-  @spec read(name :: String.t(), size :: non_neg_integer()) :: Type.try_t(binary())
-  defnif read(name, size)
+  @spec read(payload_record :: Shm.t()) :: Type.try_t(binary())
+  def read(shm_payload(size: size) = payload_record) do
+    read(payload_record, size)
+  end
 
-  @spec split_at(name :: String.t(), size :: non_neg_integer, name_created :: String.t(), position :: non_neg_integer()) :: Type.try_t(reference())
-  defnif split_at(name, size, name_created, position)
+  @spec read(payload_record :: Shm.t(), size :: non_neg_integer()) :: Type.try_t(binary())
+  defnif read(payload_record, size)
+
+  @spec write(payload_record :: Shm.t(), data :: binary()) :: Type.try_t(Shm.t())
+  defnif write(payload_record, data)
+
+  @spec split_at(payload_record :: Shm.t(), new_payload_record :: Shm.t(), position :: non_neg_integer()) :: Type.try_t({Shm.t(), Shm.t()})
+  defnif split_at(payload_record, new_payload_record, position)
+
+  defnif test(record)
 end

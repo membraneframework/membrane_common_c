@@ -1,45 +1,34 @@
 defmodule Membrane.Payload.Shm do
   alias __MODULE__.Native
 
-  @type t :: %__MODULE__{
+  @type t :: record(
+    :shm_payload,
     name: binary(),
     guard: reference(),
     size: non_neg_integer(),
     capacity: pos_integer()
-  }
+  )
 
-  @enforce_keys [:name, :guard, :capacity]
-  defstruct name: nil, guard: nil, size: 0, capacity: 4096
+  require Record
+  Record.defrecord :shm_payload, [name: nil, guard: nil, size: 0, capacity: 4096]
 
   @spec empty(pos_integer()) :: t()
   def empty(capacity \\ 4096) do
-    with name = generate_name(),
-         {:ok, guard} <- Native.create(name, capacity)
-    do
-      %__MODULE__{name: name, guard: guard, capacity: capacity}
-    end
+    name = generate_name()
+    {:ok, payload} = Native.create(shm_payload(name: name, capacity: capacity))
+    payload
   end
 
   @spec new(binary()) :: t()
   def new(data) do
-    with name = generate_name(),
-         {:ok, guard} <- Native.create_and_init(name, data)
-    do
-      %__MODULE__{name: name, guard: guard, capacity: byte_size(data)}
-    end
+    name = generate_name()
+    {:ok, payload} = Native.create_and_init(shm_payload(name: name, capacity: byte_size(data)), data)
+    payload
   end
 
   @spec set_capacity(t(), pos_integer()) :: t()
-  def set_capacity(%__MODULE__{name: name, size: size} = shm, capacity) do
-    Native.set_capacity(name, capacity)
-    new_size =
-      if capacity < size do
-        capacity
-      else
-        size
-      end
-
-    %__MODULE__{shm | size: new_size, capacity: capacity}
+  def set_capacity(payload, capacity) do
+    Native.set_capacity(payload, capacity)
   end
 
   defp generate_name do
@@ -50,25 +39,26 @@ end
 
 defimpl Membrane.Payload, for: Membrane.Payload.Shm do
   alias Membrane.Payload.Shm
+  import Shm
 
   @spec size(payload :: Shm.t()) :: non_neg_integer
-  def size(%Shm{size: size}) do
+  def size(shm_payload(size: size)) do
     size
   end
 
-  @spec split_at(%Shm{}, non_neg_integer) :: {%Shm{}, %Shm{}}
-  def split_at(%Shm{} = shm, 0) do
-    {shm, Shm.empty()}
+  @spec split_at(Shm.t(), non_neg_integer) :: {Shm.t(), Shm.t()}
+  def split_at(shm_payload() = payload, 0) do
+    {payload, Shm.empty()}
   end
 
-  def split_at(%Shm{size: size} = shm, at_pos) when size <= at_pos do
+  def split_at(shm_payload(size: size) = shm, at_pos) when size <= at_pos do
     {Shm.empty(), shm}
   end
 
-  def split_at(%Shm{name: name, size: size} = shm, at_pos) do
+  def split_at(shm_payload(name: name) = shm, at_pos) do
     new_name = name <> "-2"
-    {:ok, new_guard} = Shm.Native.split_at(name, size, new_name, at_pos)
-    {%Shm{shm | size: at_pos}, %Shm{name: new_name, size: size - at_pos, capacity: size - at_pos, guard: new_guard}}
+    {:ok, payloads} = Shm.Native.split_at(shm, shm_payload(name: new_name), at_pos)
+    payloads
   end
 
   @spec from_binary(binary()) :: Shm.t()
@@ -77,8 +67,8 @@ defimpl Membrane.Payload, for: Membrane.Payload.Shm do
   end
 
   @spec to_binary(Shm.t()) :: binary()
-  def to_binary(%Shm{name: name, size: size}) do
-    {:ok, bin} = Shm.Native.read(name, size)
+  def to_binary(payload) do
+    {:ok, bin} = Shm.Native.read(payload)
     bin
   end
 
