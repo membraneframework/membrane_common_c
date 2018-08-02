@@ -50,7 +50,8 @@ defmodule Membrane.Common.C.Mixfile do
   defp deps() do
     [
       {:ex_doc, "~> 0.18", only: :dev, runtime: false},
-      {:membrane_core, git: "git@github.com:membraneframework/membrane-core.git", branch: "feature/payload-types"},
+      {:membrane_core,
+       git: "git@github.com:membraneframework/membrane-core.git", branch: "feature/payload-types"},
       {:bundlex, "~> 0.1"}
     ]
   end

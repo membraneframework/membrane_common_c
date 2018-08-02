@@ -20,6 +20,10 @@ defmodule Membrane.Payload.Shm.Native do
   @spec write(payload_record :: Shm.t(), data :: binary()) :: Type.try_t(Shm.t())
   defnif write(payload_record, data)
 
-  @spec split_at(payload_record :: Shm.t(), new_payload_record :: Shm.t(), position :: non_neg_integer()) :: Type.try_t({Shm.t(), Shm.t()})
+  @spec split_at(
+          payload_record :: Shm.t(),
+          new_payload_record :: Shm.t(),
+          position :: non_neg_integer()
+        ) :: Type.try_t({Shm.t(), Shm.t()})
   defnif split_at(payload_record, new_payload_record, position)
 end

@@ -2,17 +2,18 @@ defmodule Membrane.Payload.Shm do
   alias __MODULE__.Native
 
   @type t :: %__MODULE__{
-    name: binary(),
-    guard: reference(),
-    size: non_neg_integer(),
-    capacity: pos_integer()
-  }
+          name: binary(),
+          guard: reference(),
+          size: non_neg_integer(),
+          capacity: pos_integer()
+        }
 
   @enforce_keys [:name]
   defstruct name: nil, guard: nil, size: 0, capacity: 4096
 
   @spec new(binary() | pos_integer()) :: t()
   def new(capacity \\ 4096)
+
   def new(capacity) when is_integer(capacity) do
     name = generate_name()
     {:ok, payload} = Native.create(%__MODULE__{name: name, capacity: capacity})
@@ -42,7 +43,6 @@ defmodule Membrane.Payload.Shm do
   defp generate_name do
     "/membrane_#{inspect(:os.system_time())}"
   end
-
 end
 
 defimpl Membrane.Payload, for: Membrane.Payload.Shm do
