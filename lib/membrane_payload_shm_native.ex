@@ -1,6 +1,5 @@
 defmodule Membrane.Payload.Shm.Native do
   alias Membrane.Payload.Shm
-  import Shm
   alias Membrane.Type
   use Bundlex.Loader, nif: :membrane_shm_payload
 
@@ -14,7 +13,7 @@ defmodule Membrane.Payload.Shm.Native do
   defnif set_capacity(payload_record, capacity)
 
   @spec read(payload_record :: Shm.t()) :: Type.try_t(binary())
-  def read(shm_payload(size: size) = payload_record) do
+  def read(%Shm{size: size} = payload_record) do
     read(payload_record, size)
   end
 

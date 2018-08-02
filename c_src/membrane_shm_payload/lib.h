@@ -18,18 +18,10 @@ typedef struct {
   ERL_NIF_TERM guard;
   unsigned int size;
   unsigned int capacity;
+  ERL_NIF_TERM elixir_struct_tag;
 } ShmPayload;
 
-#define RECORD_ATOM "shm_payload"
-
-enum RecordLayout {
-  RECORD_ATOM_INDEX,
-  RECORD_NAME_INDEX,
-  RECORD_GUARD_INDEX,
-  RECORD_SIZE_INDEX,
-  RECORD_CAPACITY_INDEX,
-  RECORD_FIELDS_NUM
-};
+#define SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES 5
 
 typedef enum ShmPayloadLibResult {
   SHM_PAYLOAD_RES_OK,

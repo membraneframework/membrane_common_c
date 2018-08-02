@@ -1,28 +1,56 @@
 #include "lib.h"
 
 int payload_from_record(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *payload) {
+  const ERL_NIF_TERM ATOM_STRUCT_TAG = enif_make_atom(env, "__struct__");
+  const ERL_NIF_TERM ATOM_NAME = enif_make_atom(env, "name");
+  const ERL_NIF_TERM ATOM_GUARD = enif_make_atom(env, "guard");
+  const ERL_NIF_TERM ATOM_SIZE = enif_make_atom(env, "size");
+  const ERL_NIF_TERM ATOM_CAPACITY = enif_make_atom(env, "capacity");
+
   int result;
-  int arity;
-  const ERL_NIF_TERM *record_array;
-  result = enif_get_tuple(env, record, &arity, &record_array);
+  ERL_NIF_TERM tmp_term;
+
+  // Get guard
+  result = enif_get_map_value(env, record, ATOM_GUARD, &tmp_term);
+  if (!result) {
+    return 0;
+  }
+  payload->guard = tmp_term;
+
+  // Get Elixir struct tag
+  result = enif_get_map_value(env, record, ATOM_STRUCT_TAG, &tmp_term);
+  if (!result) {
+    return 0;
+  }
+  payload->elixir_struct_tag = tmp_term;
+
+  // Get size
+  result = enif_get_map_value(env, record, ATOM_SIZE, &tmp_term);
+  if (!result) {
+    return 0;
+  }
+  result = enif_get_uint(env, tmp_term, &payload->size);
   if (!result) {
     return 0;
   }
 
-  payload->guard = record_array[RECORD_GUARD_INDEX];
-
-  result = enif_get_uint(env, record_array[RECORD_SIZE_INDEX], &payload->size);
+  // Get capacity
+  result = enif_get_map_value(env, record, ATOM_CAPACITY, &tmp_term);
+  if (!result) {
+    return 0;
+  }
+  result = enif_get_uint(env, tmp_term, &payload->capacity);
   if (!result) {
     return 0;
   }
 
-  result = enif_get_uint(env, record_array[RECORD_CAPACITY_INDEX], &payload->capacity);
+  // Get name as last to prevent failure after allocating memory
+  result = enif_get_map_value(env, record, ATOM_NAME, &tmp_term);
   if (!result) {
     return 0;
   }
-
   ErlNifBinary name_binary;
-  result = enif_inspect_binary(env, record_array[RECORD_NAME_INDEX], &name_binary);
+  result = enif_inspect_binary(env, tmp_term, &name_binary);
   if (!result) {
     return 0;
   }
@@ -35,18 +63,34 @@ int payload_from_record(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *payloa
 }
 
 ERL_NIF_TERM record_from_payload(ErlNifEnv * env, ShmPayload * payload) {
-  ERL_NIF_TERM record_array[RECORD_FIELDS_NUM];
+  ERL_NIF_TERM keys[SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES] = {
+    enif_make_atom(env, "__struct__"),
+    enif_make_atom(env, "name"),
+    enif_make_atom(env, "guard"),
+    enif_make_atom(env, "size"),
+    enif_make_atom(env, "capacity")
+  };
 
-  record_array[RECORD_ATOM_INDEX] = enif_make_atom(env, RECORD_ATOM);
-  void * name_ptr = enif_make_new_binary(env, payload->name_len, &record_array[RECORD_NAME_INDEX]);
+  ERL_NIF_TERM name_term;
+  void * name_ptr = enif_make_new_binary(env, payload->name_len, &name_term);
   memcpy(name_ptr, payload->name, payload->name_len);
   free(payload->name);
 
-  record_array[RECORD_GUARD_INDEX] = payload->guard;
-  record_array[RECORD_SIZE_INDEX] = enif_make_int(env, payload->size);
-  record_array[RECORD_CAPACITY_INDEX] = enif_make_int(env, payload->capacity);
+  ERL_NIF_TERM values[SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES] = {
+    payload->elixir_struct_tag,
+    name_term,
+    payload->guard,
+    enif_make_int(env, payload->size),
+    enif_make_int(env, payload->capacity)
+  };
 
-  return enif_make_tuple_from_array(env, record_array, RECORD_FIELDS_NUM);
+  ERL_NIF_TERM return_term;
+  int res = enif_make_map_from_arrays(env, keys, values, SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES, &return_term);
+  if (res) {
+    return return_term;
+  } else {
+    return membrane_util_make_error_internal(env, "make_map_from_arrays");
+  }
 }
 
 ERL_NIF_TERM make_error_for_shm_payload_res(ErlNifEnv * env, ShmPayloadLibResult result) {

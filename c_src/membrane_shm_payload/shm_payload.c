@@ -162,10 +162,13 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   old_payload.size = split_pos;
   new_payload.size = res;
 
-  return_term = membrane_util_make_ok_tuple2(
+  return_term = membrane_util_make_ok_tuple(
     env,
-    record_from_payload(env, &old_payload),
-    record_from_payload(env, &new_payload)
+    enif_make_tuple2(
+      env,
+      record_from_payload(env, &old_payload),
+      record_from_payload(env, &new_payload)
+    )
   );
 
 split_at_exit:
