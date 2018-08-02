@@ -1,6 +1,6 @@
 #include "lib.h"
 
-int payload_from_record(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *payload) {
+int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *payload) {
   const ERL_NIF_TERM ATOM_STRUCT_TAG = enif_make_atom(env, "__struct__");
   const ERL_NIF_TERM ATOM_NAME = enif_make_atom(env, "name");
   const ERL_NIF_TERM ATOM_GUARD = enif_make_atom(env, "guard");
@@ -62,7 +62,7 @@ int payload_from_record(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *payloa
   return 1;
 }
 
-ERL_NIF_TERM record_from_payload(ErlNifEnv * env, ShmPayload * payload) {
+ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload) {
   ERL_NIF_TERM keys[SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES] = {
     enif_make_atom(env, "__struct__"),
     enif_make_atom(env, "name"),
@@ -93,7 +93,7 @@ ERL_NIF_TERM record_from_payload(ErlNifEnv * env, ShmPayload * payload) {
   }
 }
 
-ERL_NIF_TERM make_error_for_shm_payload_res(ErlNifEnv * env, ShmPayloadLibResult result) {
+ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult result) {
   switch (result) {
     case SHM_PAYLOAD_RES_OK:
       return membrane_util_make_error_internal(env, "ok_is_not_error");
@@ -108,20 +108,20 @@ ERL_NIF_TERM make_error_for_shm_payload_res(ErlNifEnv * env, ShmPayloadLibResult
   }
 }
 
-ShmPayloadLibResult set_capacity(ShmPayload * payload, size_t capacity) {
+ShmPayloadLibResult shm_payload_set_capacity(ShmPayload * payload, size_t capacity) {
   ShmPayloadLibResult result;
   int fd = -1;
 
   fd = shm_open(payload->name, O_RDWR, 0666);
   if (fd < 0) {
     result = SHM_PAYLOAD_ERROR_SHM_OPEN;
-    goto set_capacity_exit;
+    goto shm_payload_set_capacity_exit;
   }
 
   int res = ftruncate(fd, capacity);
   if (res < 0) {
     result = SHM_PAYLOAD_ERROR_FTRUNCATE;
-    goto set_capacity_exit;
+    goto shm_payload_set_capacity_exit;
   }
   payload->capacity = capacity;
   if (payload->size > capacity) {
@@ -129,31 +129,31 @@ ShmPayloadLibResult set_capacity(ShmPayload * payload, size_t capacity) {
     payload->size = capacity;
   }
   result = SHM_PAYLOAD_RES_OK;
-set_capacity_exit:
+shm_payload_set_capacity_exit:
   if (fd > 0) {
     close(fd);
   }
   return result;
 }
 
-ShmPayloadLibResult open_and_mmap(ShmPayload * payload, char ** content) {
+ShmPayloadLibResult shm_payload_open_and_mmap(ShmPayload * payload, char ** content) {
   ShmPayloadLibResult result;
   int fd = -1;
 
   fd = shm_open(payload->name, O_RDWR, 0666);
   if (fd < 0) {
     result = SHM_PAYLOAD_ERROR_SHM_OPEN;
-    goto open_and_mmap_exit;
+    goto shm_payload_open_and_mmap_exit;
   }
 
   *content = mmap(NULL, payload->capacity, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (MAP_FAILED == *content) {
     result = SHM_PAYLOAD_ERROR_MMAP;
-    goto open_and_mmap_exit;
+    goto shm_payload_open_and_mmap_exit;
   }
 
   result = SHM_PAYLOAD_RES_OK;
-open_and_mmap_exit:
+shm_payload_open_and_mmap_exit:
   if (fd > 0) {
     close(fd);
   }

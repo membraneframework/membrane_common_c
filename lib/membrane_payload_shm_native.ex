@@ -6,9 +6,6 @@ defmodule Membrane.Payload.Shm.Native do
   @spec create(payload_record :: Shm.t()) :: Type.try_t(Shm.t())
   defnif create(payload_record)
 
-  @spec create_and_init(payload_record :: Shm.t(), data :: binary()) :: Type.try_t(Shm.t())
-  defnif create_and_init(payload_record, data)
-
   @spec set_capacity(payload_record :: Shm.t(), capacity :: pos_integer()) :: Type.try_t()
   defnif set_capacity(payload_record, capacity)
 
@@ -25,6 +22,4 @@ defmodule Membrane.Payload.Shm.Native do
 
   @spec split_at(payload_record :: Shm.t(), new_payload_record :: Shm.t(), position :: non_neg_integer()) :: Type.try_t({Shm.t(), Shm.t()})
   defnif split_at(payload_record, new_payload_record, position)
-
-  defnif test(record)
 end

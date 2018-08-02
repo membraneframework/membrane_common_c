@@ -21,14 +21,16 @@ defmodule Membrane.Payload.Shm do
 
   def new(data) when is_binary(data) do
     name = generate_name()
-    {:ok, payload} = Native.create_and_init(%__MODULE__{name: name, capacity: byte_size(data)}, data)
+    {:ok, payload} = Native.create(%__MODULE__{name: name, capacity: byte_size(data)})
+    {:ok, payload} = Native.write(payload, data)
     payload
   end
 
   @spec new(binary(), pos_integer()) :: t()
-  def new(data, capacity) when is_binary(data) and is_integer(capacity) do
+  def new(data, capacity) when is_binary(data) and is_integer(capacity) and capacity > 0 do
     name = generate_name()
-    {:ok, payload} = Native.create_and_init(%__MODULE__{name: name, capacity: capacity}, data)
+    {:ok, payload} = Native.create(%__MODULE__{name: name, capacity: capacity})
+    {:ok, payload} = Native.write(payload, data)
     payload
   end
 

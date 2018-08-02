@@ -30,11 +30,11 @@ typedef enum ShmPayloadLibResult {
   SHM_PAYLOAD_ERROR_MMAP
 } ShmPayloadLibResult;
 
-int payload_from_record(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload * payload);
-ERL_NIF_TERM record_from_payload(ErlNifEnv * env, ShmPayload * payload);
-ERL_NIF_TERM make_error_for_shm_payload_res(ErlNifEnv * env, ShmPayloadLibResult result);
-ShmPayloadLibResult set_capacity(ShmPayload * payload, size_t capacity);
-ShmPayloadLibResult open_and_mmap(ShmPayload * payload, char ** content);
+int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload * payload);
+ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload);
+ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult result);
+ShmPayloadLibResult shm_payload_set_capacity(ShmPayload * payload, size_t capacity);
+ShmPayloadLibResult shm_payload_open_and_mmap(ShmPayload * payload, char ** content);
 
 #define MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(position, var_name) \
-  MEMBRANE_UTIL_PARSE_ARG(position, var_name, ShmPayload var_name, payload_from_record, &var_name)
+  MEMBRANE_UTIL_PARSE_ARG(position, var_name, ShmPayload var_name, shm_payload_get_from_term, &var_name)
