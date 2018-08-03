@@ -2,10 +2,12 @@ defmodule Membrane.Common.C.Mixfile do
   use Mix.Project
   Application.put_env(:bundlex, :membrane_common_c, __ENV__)
 
+  @version "0.1.0"
+
   def project do
     [
       app: :membrane_common_c,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:bundlex] ++ Mix.compilers(),
@@ -40,7 +42,8 @@ defmodule Membrane.Common.C.Mixfile do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md"]
+      extras: ["README.md"],
+      source_ref: "v#{@version}"
     ]
   end
 
