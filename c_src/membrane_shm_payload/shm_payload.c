@@ -58,6 +58,7 @@ static ERL_NIF_TERM export_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
   if (fd > 0) {
     close(fd);
   }
+  shm_payload_free(&payload);
   return return_term;
 }
 
@@ -65,22 +66,30 @@ static ERL_NIF_TERM export_set_capacity(ErlNifEnv* env, int argc, const ERL_NIF_
   UNUSED(argc);
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
   MEMBRANE_UTIL_PARSE_UINT_ARG(1, capacity);
+  ERL_NIF_TERM return_term;
 
   ShmPayloadLibResult result = shm_payload_set_capacity(&payload, capacity);
   if (SHM_PAYLOAD_RES_OK == result) {
-    return membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
+    return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
   } else {
-    return shm_payload_make_error_term(env, result);
+    return_term = shm_payload_make_error_term(env, result);
   }
+  shm_payload_free(&payload);
+  return return_term;
 }
 
 static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   UNUSED(argc);
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
-  MEMBRANE_UTIL_PARSE_UINT_ARG(1, size);
+  MEMBRANE_UTIL_PARSE_UINT_ARG(1, cnt);
 
   ERL_NIF_TERM return_term;
   char * payload_ptr = MAP_FAILED;
+
+  if (cnt > payload.size) {
+    return_term = membrane_util_make_error_args(env, "cnt", "cnt is grater than payload size");
+    goto read_exit;
+  }
 
   ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload, &payload_ptr);
   if (SHM_PAYLOAD_RES_OK != result) {
@@ -89,14 +98,15 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
   }
 
   ERL_NIF_TERM out_bin_term;
-  unsigned char * output_data = enif_make_new_binary(env, size, &out_bin_term);
-  memcpy(output_data, payload_ptr, size);
+  unsigned char * output_data = enif_make_new_binary(env, cnt, &out_bin_term);
+  memcpy(output_data, payload_ptr, cnt);
 
   return_term = membrane_util_make_ok_tuple(env, out_bin_term);
 read_exit:
   if (MAP_FAILED != payload_ptr) {
-    munmap(payload_ptr, size);
+    munmap(payload_ptr, payload.capacity);
   }
+  shm_payload_free(&payload);
   return return_term;
 }
 
@@ -124,6 +134,7 @@ write_exit:
   if (MAP_FAILED != payload_ptr) {
     munmap(payload_ptr, payload.capacity);
   }
+  shm_payload_free(&payload);
   return return_term;
 }
 
@@ -175,6 +186,8 @@ split_at_exit:
   if (new_fd > 0) {
     close(new_fd);
   }
+  shm_payload_free(&old_payload);
+  shm_payload_free(&new_payload);
   return return_term;
 }
 

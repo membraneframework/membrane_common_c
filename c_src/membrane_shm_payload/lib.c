@@ -1,6 +1,11 @@
 #include "lib.h"
 
-int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *payload) {
+/**
+ * Initializes ShmPayload C struct using data from Membrane.Payload.Shm Elixir struct
+ *
+ * Each call should be paired with `shm_payload_free` call to deallocate resources
+ */
+int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayload *payload) {
   const ERL_NIF_TERM ATOM_STRUCT_TAG = enif_make_atom(env, "__struct__");
   const ERL_NIF_TERM ATOM_NAME = enif_make_atom(env, "name");
   const ERL_NIF_TERM ATOM_GUARD = enif_make_atom(env, "guard");
@@ -11,21 +16,21 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *
   ERL_NIF_TERM tmp_term;
 
   // Get guard
-  result = enif_get_map_value(env, record, ATOM_GUARD, &tmp_term);
+  result = enif_get_map_value(env, struct_term, ATOM_GUARD, &tmp_term);
   if (!result) {
     return 0;
   }
   payload->guard = tmp_term;
 
   // Get Elixir struct tag
-  result = enif_get_map_value(env, record, ATOM_STRUCT_TAG, &tmp_term);
+  result = enif_get_map_value(env, struct_term, ATOM_STRUCT_TAG, &tmp_term);
   if (!result) {
     return 0;
   }
   payload->elixir_struct_tag = tmp_term;
 
   // Get size
-  result = enif_get_map_value(env, record, ATOM_SIZE, &tmp_term);
+  result = enif_get_map_value(env, struct_term, ATOM_SIZE, &tmp_term);
   if (!result) {
     return 0;
   }
@@ -35,7 +40,7 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *
   }
 
   // Get capacity
-  result = enif_get_map_value(env, record, ATOM_CAPACITY, &tmp_term);
+  result = enif_get_map_value(env, struct_term, ATOM_CAPACITY, &tmp_term);
   if (!result) {
     return 0;
   }
@@ -45,7 +50,7 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *
   }
 
   // Get name as last to prevent failure after allocating memory
-  result = enif_get_map_value(env, record, ATOM_NAME, &tmp_term);
+  result = enif_get_map_value(env, struct_term, ATOM_NAME, &tmp_term);
   if (!result) {
     return 0;
   }
@@ -54,7 +59,7 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *
   if (!result) {
     return 0;
   }
-  payload->name = malloc(name_binary.size + 1);
+  payload->name = enif_alloc(name_binary.size + 1);
   memcpy(payload->name, (char *) name_binary.data, name_binary.size);
   payload->name[name_binary.size] = '\0';
   payload->name_len = name_binary.size;
@@ -62,6 +67,18 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload *
   return 1;
 }
 
+/**
+ * Frees resources allocated by `shm_payload_get_from_term`
+ */
+void shm_payload_free(ShmPayload *payload) {
+  if (payload != NULL && payload->name != NULL) {
+    enif_free(payload->name);
+  }
+}
+
+/**
+ * Creates Membrane.Payload.Shm Elixir struct from ShmPayload C struct
+ */
 ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload) {
   ERL_NIF_TERM keys[SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES] = {
     enif_make_atom(env, "__struct__"),
@@ -74,7 +91,6 @@ ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload) {
   ERL_NIF_TERM name_term;
   void * name_ptr = enif_make_new_binary(env, payload->name_len, &name_term);
   memcpy(name_ptr, payload->name, payload->name_len);
-  free(payload->name);
 
   ERL_NIF_TERM values[SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES] = {
     payload->elixir_struct_tag,
@@ -93,6 +109,10 @@ ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload) {
   }
 }
 
+
+/**
+ * Creates term describing an error encoded in result (ShmPayloadLibResult)
+ */
 ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult result) {
   switch (result) {
     case SHM_PAYLOAD_RES_OK:
@@ -104,10 +124,13 @@ ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult re
     case SHM_PAYLOAD_ERROR_MMAP:
       return membrane_util_make_error_errno(env, "mmap");
     default:
-      return membrane_util_make_error_internal(env, "unknown_err");
+      return membrane_util_make_error_internal(env, "unknown_error");
   }
 }
 
+/**
+ * Sets the capacity of shared memory payload. The struct is updated accordingly.
+ */
 ShmPayloadLibResult shm_payload_set_capacity(ShmPayload * payload, size_t capacity) {
   ShmPayloadLibResult result;
   int fd = -1;
@@ -136,6 +159,15 @@ shm_payload_set_capacity_exit:
   return result;
 }
 
+/**
+ * Maps shared memory into address space of current process (using mmap)
+ *
+ * On success sets the content to mmaped memory. On failure content is set to MAP_FAILED
+ * ((void *)-1) and returned result indicates which function failed.
+ *
+ * Mapped memory has to be released with `munmap` call, which requires size of
+ * the mapped memory segment. It is equal to payload->capacity passed to this function.
+ */
 ShmPayloadLibResult shm_payload_open_and_mmap(ShmPayload * payload, char ** content) {
   ShmPayloadLibResult result;
   int fd = -1;
