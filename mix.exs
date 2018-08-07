@@ -53,7 +53,7 @@ defmodule Membrane.Common.C.Mixfile do
       {:membrane_core,
        git: "https://github.com/membraneframework/membrane-core.git",
        branch: "feature/payload-types"},
-      {:bundlex, "~> 0.1"}
+      {:bundlex, "~> 0.1.3"}
     ]
   end
 end
