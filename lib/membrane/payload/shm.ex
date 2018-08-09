@@ -19,11 +19,11 @@ defmodule Membrane.Payload.Shm do
   as the associated struct is not garbage collected.
   """
   @type t :: %__MODULE__{
-            name: binary(),
-            guard: reference(),
-            size: non_neg_integer(),
-            capacity: pos_integer()
-          }
+          name: binary(),
+          guard: reference(),
+          size: non_neg_integer(),
+          capacity: pos_integer()
+        }
 
   @enforce_keys [:name]
   defstruct name: nil, guard: nil, size: 0, capacity: 4096
