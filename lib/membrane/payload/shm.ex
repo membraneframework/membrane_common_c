@@ -10,6 +10,7 @@ defmodule Membrane.Payload.Shm do
   and then access the shared memory from the native code.
   """
   alias __MODULE__.Native
+  alias Membrane.Type
 
   @typedoc """
   Struct describing payload kept in shared memory.
@@ -17,7 +18,7 @@ defmodule Membrane.Payload.Shm do
   Should not be modified directly. Shared memory should be available as long
   as the associated struct is not garbage collected.
   """
-  @opaque t :: %__MODULE__{
+  @type t :: %__MODULE__{
             name: binary(),
             guard: reference(),
             size: non_neg_integer(),
@@ -71,7 +72,7 @@ defmodule Membrane.Payload.Shm do
   defdelegate set_capacity(payload, capacity), to: Native
 
   defp generate_name do
-    "/membrane_#{inspect(:os.system_time())}"
+    "/membrane_#{inspect(System.system_time(:nanosecond))}_#{inspect(:random.uniform(100))}"
   end
 end
 
@@ -83,24 +84,19 @@ defimpl Membrane.Payload, for: Membrane.Payload.Shm do
     size
   end
 
-  @spec split_at(Shm.t(), non_neg_integer) :: {Shm.t(), Shm.t()}
-  def split_at(%Shm{} = payload, 0) do
-    {payload, Shm.new()}
-  end
-
-  def split_at(%Shm{size: size} = shm, at_pos) when size <= at_pos do
-    {Shm.new(), shm}
-  end
-
-  def split_at(%Shm{name: name} = shm, at_pos) do
+  @spec split_at!(payload :: Shm.t(), pos_integer) :: {Shm.t(), Shm.t()}
+  def split_at!(%Shm{name: name, size: size} = shm, at_pos) when 0 < at_pos and at_pos < size do
     new_name = name <> "-2"
     {:ok, payloads} = Shm.Native.split_at(shm, %Shm{name: new_name}, at_pos)
     payloads
   end
 
-  @spec to_binary(Shm.t()) :: binary()
+  @spec to_binary(payload :: Shm.t()) :: binary()
   def to_binary(payload) do
     {:ok, bin} = Shm.Native.read(payload)
     bin
   end
+
+  @spec type(payload :: Shm.t()) :: :shm
+  def type(_), do: :shm
 end

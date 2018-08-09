@@ -1,5 +1,4 @@
-#ifndef __SHM_PAYLOAD_H__
-#define __SHM_PAYLOAD_H__
+#pragma once
 
 #define NAME_MAX 255
 #define _POSIX_C_SOURCE 200809L
@@ -16,5 +15,3 @@
 typedef struct _ShmGuard {
   char name[NAME_MAX+1];
 } ShmGuard;
-
-#endif // __SHM_PAYLOAD_H__

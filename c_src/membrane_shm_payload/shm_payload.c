@@ -22,7 +22,7 @@ int load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info) {
 
 static int create(ErlNifEnv* env, ShmPayload * payload, int *fd, ERL_NIF_TERM *return_term) {
   if (payload->name_len > NAME_MAX) {
-    *return_term = membrane_util_make_error_args(env, "name", "Name to long");
+    *return_term = membrane_util_make_error_args(env, "name", "Name too long");
     return -1;
   }
 
@@ -87,7 +87,7 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
   char * payload_ptr = MAP_FAILED;
 
   if (cnt > payload.size) {
-    return_term = membrane_util_make_error_args(env, "cnt", "cnt is grater than payload size");
+    return_term = membrane_util_make_error_args(env, "cnt", "cnt is greater than payload size");
     goto read_exit;
   }
 

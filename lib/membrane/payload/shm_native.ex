@@ -9,7 +9,7 @@ defmodule Membrane.Payload.Shm.Native do
 
   The guard associated with this memory segment is places in returned
   `Membrane.Payload.Shm` struct. When the guard resource is deallocated by BEAM,
-  the shared memory is unlikend and will disappear from the system when last process
+  the shared memory is unlinked and will disappear from the system when last process
   using it unmaps it
   """
   @spec create(payload :: Shm.t()) :: Type.try_t(Shm.t())
