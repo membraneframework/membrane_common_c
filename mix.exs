@@ -42,7 +42,7 @@ defmodule Membrane.Common.C.Mixfile do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md"] ++ Path.wildcard("pages/*.md"),
+      extras: ["README.md"],
       source_ref: "v#{@version}"
     ]
   end
