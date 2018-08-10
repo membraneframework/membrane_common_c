@@ -84,14 +84,12 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
   MEMBRANE_UTIL_PARSE_UINT_ARG(1, cnt);
 
   ERL_NIF_TERM return_term;
-  char * payload_ptr = MAP_FAILED;
-
   if (cnt > payload.size) {
     return_term = membrane_util_make_error_args(env, "cnt", "cnt is greater than payload size");
     goto read_exit;
   }
 
-  ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload, &payload_ptr);
+  ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
     goto read_exit;
@@ -99,13 +97,10 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
   ERL_NIF_TERM out_bin_term;
   unsigned char * output_data = enif_make_new_binary(env, cnt, &out_bin_term);
-  memcpy(output_data, payload_ptr, cnt);
+  memcpy(output_data, payload.mapped_memory, cnt);
 
   return_term = membrane_util_make_ok_tuple(env, out_bin_term);
 read_exit:
-  if (MAP_FAILED != payload_ptr) {
-    munmap(payload_ptr, payload.capacity);
-  }
   shm_payload_free(&payload);
   return return_term;
 }
@@ -120,20 +115,16 @@ static ERL_NIF_TERM export_write(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
     shm_payload_set_capacity(&payload, data.size);
   }
 
-  char * payload_ptr = MAP_FAILED;
-  ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload, &payload_ptr);
+  ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
     goto write_exit;
   }
 
-  memcpy(payload_ptr, (void *)data.data, data.size);
+  memcpy(payload.mapped_memory, (void *)data.data, data.size);
   payload.size = data.size;
   return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
 write_exit:
-  if (MAP_FAILED != payload_ptr) {
-    munmap(payload_ptr, payload.capacity);
-  }
   shm_payload_free(&payload);
   return return_term;
 }
@@ -145,10 +136,8 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   MEMBRANE_UTIL_PARSE_UINT_ARG(2, split_pos);
 
   ERL_NIF_TERM return_term;
-  char * payload_ptr = MAP_FAILED;
   int new_fd = -1;
-  int old_capacity = old_payload.capacity; //used to unmap payload
-  ShmPayloadLibResult result = shm_payload_open_and_mmap(&old_payload, &payload_ptr);
+  ShmPayloadLibResult result = shm_payload_open_and_mmap(&old_payload);
 
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
@@ -161,7 +150,7 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
 
   int new_size = old_payload.size - split_pos;
 
-  int res = write(new_fd, payload_ptr + split_pos, new_size);
+  int res = write(new_fd, old_payload.mapped_memory + split_pos, new_size);
   if (res < 0) {
     return_term = membrane_util_make_error_errno(env, "write");
     goto split_at_exit;
@@ -180,9 +169,6 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   );
 
 split_at_exit:
-  if (MAP_FAILED != payload_ptr) {
-    munmap(payload_ptr, old_capacity);
-  }
   if (new_fd > 0) {
     close(new_fd);
   }

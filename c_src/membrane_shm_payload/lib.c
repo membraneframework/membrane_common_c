@@ -15,6 +15,8 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   int result;
   ERL_NIF_TERM tmp_term;
 
+  payload->mapped_memory = MAP_FAILED;
+
   // Get guard
   result = enif_get_map_value(env, struct_term, ATOM_GUARD, &tmp_term);
   if (!result) {
@@ -69,11 +71,15 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
 
 /**
  * Frees resources allocated by `shm_payload_get_from_term`
+ *
+ * If payload was mapped, unmaps it as well.
  */
 void shm_payload_free(ShmPayload *payload) {
-  if (payload != NULL && payload->name != NULL) {
+  if (payload->name != NULL) {
     enif_free(payload->name);
   }
+
+  shm_payload_unmap(payload);
 }
 
 /**
@@ -123,6 +129,8 @@ ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult re
       return membrane_util_make_error_errno(env, "ftruncate");
     case SHM_PAYLOAD_ERROR_MMAP:
       return membrane_util_make_error_errno(env, "mmap");
+    case SHM_PAYLOAD_ERROR_SHM_MAPPED:
+      return membrane_util_make_error_internal(env, "shm_is_mapped");
     default:
       return membrane_util_make_error_internal(env, "unknown_error");
   }
@@ -130,10 +138,17 @@ ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult re
 
 /**
  * Sets the capacity of shared memory payload. The struct is updated accordingly.
+ *
+ * Should not be invoked when shm is mapped into the memory.
  */
 ShmPayloadLibResult shm_payload_set_capacity(ShmPayload * payload, size_t capacity) {
   ShmPayloadLibResult result;
   int fd = -1;
+
+  if (payload->mapped_memory != MAP_FAILED) {
+    result = SHM_PAYLOAD_ERROR_SHM_MAPPED;
+    goto shm_payload_set_capacity_exit;
+  }
 
   fd = shm_open(payload->name, O_RDWR, 0666);
   if (fd < 0) {
@@ -162,13 +177,14 @@ shm_payload_set_capacity_exit:
 /**
  * Maps shared memory into address space of current process (using mmap)
  *
- * On success sets the content to mmaped memory. On failure content is set to MAP_FAILED
- * ((void *)-1) and returned result indicates which function failed.
+ * On success sets payload->mapped_memory to a valid pointer. On failure it is set to
+ * MAP_FAILED ((void *)-1) and returned result indicates which function failed.
  *
- * Mapped memory has to be released with `munmap` call, which requires size of
- * the mapped memory segment. It is equal to payload->capacity passed to this function.
+ * Mapped memory has to be released with either 'shm_payload_free' or 'shm_payload_unmap'.
+ *
+ * While memory is mapped the capacity of shm must not be modified.
  */
-ShmPayloadLibResult shm_payload_open_and_mmap(ShmPayload * payload, char ** content) {
+ShmPayloadLibResult shm_payload_open_and_mmap(ShmPayload * payload) {
   ShmPayloadLibResult result;
   int fd = -1;
 
@@ -178,8 +194,8 @@ ShmPayloadLibResult shm_payload_open_and_mmap(ShmPayload * payload, char ** cont
     goto shm_payload_open_and_mmap_exit;
   }
 
-  *content = mmap(NULL, payload->capacity, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  if (MAP_FAILED == *content) {
+  payload->mapped_memory = mmap(NULL, payload->capacity, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  if (MAP_FAILED == payload->mapped_memory) {
     result = SHM_PAYLOAD_ERROR_MMAP;
     goto shm_payload_open_and_mmap_exit;
   }
@@ -190,4 +206,11 @@ shm_payload_open_and_mmap_exit:
     close(fd);
   }
   return result;
+}
+
+void shm_payload_unmap(ShmPayload * payload) {
+  if (payload->mapped_memory != MAP_FAILED) {
+    munmap(payload->mapped_memory, payload->capacity);
+  }
+  payload->mapped_memory = MAP_FAILED;
 }

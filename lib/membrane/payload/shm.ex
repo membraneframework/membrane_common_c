@@ -28,34 +28,30 @@ defmodule Membrane.Payload.Shm do
   defstruct name: nil, guard: nil, size: 0, capacity: 4096
 
   @doc """
-  Creates a new Shm payload.
-
-  If binary is passed as parameter, SHM will be initialized with the data.
-  If a parameter is a number, SHM will have capacity of this size.
-
-  See also `new/2`
+  Creates a new, empty Shm payload
   """
-  @spec new(binary() | pos_integer()) :: t()
-  def new(capacity \\ 4096)
-
-  def new(capacity) when is_integer(capacity) do
+  @spec empty(pos_integer()) :: t()
+  def empty(capacity \\ 4096) do
     name = generate_name()
     {:ok, payload} = Native.create(%__MODULE__{name: name, capacity: capacity})
     payload
   end
 
+  @doc """
+  Creates a new Shm payload from existing data.
+  """
+  @spec new(binary()) :: t()
   def new(data) when is_binary(data) do
-    name = generate_name()
-    {:ok, payload} = Native.create(%__MODULE__{name: name, capacity: byte_size(data)})
-    {:ok, payload} = Native.write(payload, data)
-    payload
+    new(data, byte_size(data))
   end
 
   @doc """
   Creates a new Shm payload initialized with `data` and set capacity.
+
+  The actual capacity is the greater of passed capacity and data size
   """
   @spec new(data :: binary(), capacity :: pos_integer()) :: t()
-  def new(data, capacity) when is_binary(data) and is_integer(capacity) and capacity > 0 do
+  def new(data, capacity) when capacity > 0 do
     name = generate_name()
     {:ok, payload} = Native.create(%__MODULE__{name: name, capacity: capacity})
     {:ok, payload} = Native.write(payload, data)
@@ -83,8 +79,8 @@ defimpl Membrane.Payload, for: Membrane.Payload.Shm do
     size
   end
 
-  @spec split_at!(payload :: Shm.t(), pos_integer) :: {Shm.t(), Shm.t()}
-  def split_at!(%Shm{name: name, size: size} = shm, at_pos) when 0 < at_pos and at_pos < size do
+  @spec split_at(payload :: Shm.t(), pos_integer) :: {Shm.t(), Shm.t()}
+  def split_at(%Shm{name: name, size: size} = shm, at_pos) when 0 < at_pos and at_pos < size do
     new_name = name <> "-2"
     {:ok, payloads} = Shm.Native.split_at(shm, %Shm{name: new_name}, at_pos)
     payloads
