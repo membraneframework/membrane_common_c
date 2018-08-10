@@ -10,7 +10,6 @@ defmodule Membrane.Payload.Shm do
   and then access the shared memory from the native code.
   """
   alias __MODULE__.Native
-  alias Membrane.Type
 
   @typedoc """
   Struct describing payload kept in shared memory.
@@ -72,7 +71,7 @@ defmodule Membrane.Payload.Shm do
   defdelegate set_capacity(payload, capacity), to: Native
 
   defp generate_name do
-    "/membrane_#{inspect(System.system_time(:nanosecond))}_#{inspect(:random.uniform(100))}"
+    "/membrane_#{inspect(System.system_time(:nanosecond))}_#{inspect(:rand.uniform(100))}"
   end
 end
 
