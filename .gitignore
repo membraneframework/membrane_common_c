@@ -1,6 +1,7 @@
-# Created by https://www.gitignore.io/api/c,vim,linux,macos,elixir,windows,visualstudiocode
-
+.elixir_ls
 bundlex.sh
+
+# Created by https://www.gitignore.io/api/c,vim,linux,macos,elixir,windows,visualstudiocode
 
 ### C ###
 # Prerequisites

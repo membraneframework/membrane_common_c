@@ -71,6 +71,19 @@ ERL_NIF_TERM membrane_util_make_error_args(ErlNifEnv* env, const char* field, co
   return membrane_util_make_error(env, enif_make_tuple_from_array(env, tuple, 3));
 }
 
+/**
+ * Helper for returning errors from system calls using errno.
+ * Builds `{:error, {call, errno_description}}`, where errno_description is
+ * obtained using strerror function
+ */
+ERL_NIF_TERM membrane_util_make_error_errno(ErlNifEnv* env, const char* call) {
+  ERL_NIF_TERM tuple[2] = {
+    enif_make_atom(env, call),
+    enif_make_string(env, strerror(errno), ERL_NIF_LATIN1)
+  };
+
+  return membrane_util_make_error(env, enif_make_tuple_from_array(env, tuple, 2));
+}
 
 /**
  * Builds `{:error, {:internal, reason}}` for returning when certain

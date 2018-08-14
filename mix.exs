@@ -2,7 +2,7 @@ defmodule Membrane.Common.C.Mixfile do
   use Mix.Project
   Application.put_env(:bundlex, :membrane_common_c, __ENV__)
 
-  @version "0.1.0"
+  @version "0.2.0"
 
   def project do
     [
@@ -49,8 +49,11 @@ defmodule Membrane.Common.C.Mixfile do
 
   defp deps() do
     [
-      {:ex_doc, "~> 0.18", only: :dev, runtime: false},
-      {:bundlex, "~> 0.1"}
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:membrane_core,
+       git: "https://github.com/membraneframework/membrane-core.git",
+       branch: "feature/payload-types"},
+      {:bundlex, "~> 0.1.3"}
     ]
   end
 end
