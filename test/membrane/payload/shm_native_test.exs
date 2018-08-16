@@ -20,6 +20,20 @@ defmodule Membrane.Payload.Shm.NativeTest do
     assert stat.size == new_shm.capacity
   end
 
+  describe "add_guard/1" do
+    @tag :shm_tmpfs
+    test "when SHM is not guarded" do
+      assert File.touch(@shm_path) == :ok
+      assert {:ok, shm} = @module.add_guard(%Shm{name: @shm_name})
+      assert is_reference(shm.guard)
+    end
+
+    test "when shm is already guarded" do
+      assert {:ok, shm} = @module.create(%Shm{name: @shm_name})
+      assert @module.add_guard(shm) == {:error, :already_guarded}
+    end
+  end
+
   @tag :shm_tmpfs
   test "set_capacity/2" do
     new_capacity = 69
