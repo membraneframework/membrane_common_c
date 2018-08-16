@@ -44,6 +44,8 @@ defmodule Membrane.Payload.Shm.NativeTest do
 
     assert {:ok, stat} = File.stat(@shm_path)
     assert stat.size == new_capacity
+    # Prevent garbage collection of shm
+    assert shm.capacity == new_capacity
   end
 
   describe "write/2" do
