@@ -29,7 +29,7 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   if (!result) {
     return 0;
   }
-  payload->elixir_struct_tag = tmp_term;
+  payload->elixir_struct_atom = tmp_term;
 
   // Get size
   result = enif_get_map_value(env, struct_term, ATOM_SIZE, &tmp_term);
@@ -69,6 +69,35 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   return 1;
 }
 
+ShmPayloadLibResult shm_payload_create(ShmPayload * payload) {
+  ShmPayloadLibResult result;
+  int fd = -1;
+
+  if (payload->name_len > NAME_MAX) {
+    result = SHM_PAYLOAD_ERROR_NAME_TOO_LONG;
+    goto shm_payload_create_exit;
+  }
+
+  fd = shm_open(payload->name, O_RDWR | O_CREAT | O_EXCL, 0666);
+  if (fd < 0) {
+    result = SHM_PAYLOAD_ERROR_SHM_OPEN;
+    goto shm_payload_create_exit;
+  }
+
+  int ftr_res = ftruncate(fd, payload->capacity);
+  if (ftr_res < 0) {
+    result = SHM_PAYLOAD_ERROR_FTRUNCATE;
+    goto shm_payload_create_exit;
+  }
+
+  result = SHM_PAYLOAD_RES_OK;
+shm_payload_create_exit:
+  if (fd > 0) {
+    close(fd);
+  }
+  return result;
+}
+
 /**
  * Frees resources allocated by `shm_payload_get_from_term`
  *
@@ -99,7 +128,7 @@ ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload) {
   memcpy(name_ptr, payload->name, payload->name_len);
 
   ERL_NIF_TERM values[SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES] = {
-    payload->elixir_struct_tag,
+    payload->elixir_struct_atom,
     name_term,
     payload->guard,
     enif_make_int(env, payload->size),

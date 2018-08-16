@@ -1,5 +1,8 @@
 defmodule Membrane.Payload.Shm.Native do
-  @moduledoc false
+  @moduledoc """
+  This module provides natively implemented functions allowing low-level
+  operations on Posix shared memory. Use with caution!
+  """
   alias Membrane.Payload.Shm
   alias Membrane.Type
   use Bundlex.Loader, nif: :membrane_shm_payload
@@ -7,13 +10,25 @@ defmodule Membrane.Payload.Shm.Native do
   @doc """
   Creates shared memory segment and a guard for it.
 
-  The guard associated with this memory segment is places in returned
+  The guard associated with this memory segment is placed in returned
   `Membrane.Payload.Shm` struct. When the guard resource is deallocated by BEAM,
   the shared memory is unlinked and will disappear from the system when last process
   using it unmaps it
   """
   @spec create(payload :: Shm.t()) :: Type.try_t(Shm.t())
   defnif create(payload)
+
+  @doc """
+  Creates guard for existing shared memory.
+
+  This function should be only used when `Membrane.Payload.Shm` struct was created by
+  some other NIF and even though the SHM exists, it's guard field is set to `nil`.
+  Trying to use it with SHM obtained via `create/1` will result in error.
+
+  See also docs for `create/1`
+  """
+  @spec add_guard(Shm.t()) :: Type.try_t(Shm.t())
+  defnif add_guard(payload)
 
   @doc """
   Sets the capacity of SHM and updates the struct accordingly
