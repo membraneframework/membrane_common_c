@@ -34,8 +34,9 @@ typedef enum ShmPayloadLibResult {
   SHM_PAYLOAD_ERROR_NAME_TOO_LONG
 } ShmPayloadLibResult;
 
+void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, const char * name, unsigned capacity);
 int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload * payload);
-ShmPayloadLibResult shm_payload_create(ShmPayload * payload);
+ShmPayloadLibResult shm_payload_allocate(ShmPayload * payload);
 void shm_payload_free(ShmPayload *payload);
 ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload);
 ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult result);

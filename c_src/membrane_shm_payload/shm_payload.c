@@ -32,7 +32,7 @@ static ERL_NIF_TERM export_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
   ERL_NIF_TERM return_term;
 
-  ShmPayloadLibResult result = shm_payload_create(&payload);
+  ShmPayloadLibResult result = shm_payload_allocate(&payload);
   if (SHM_PAYLOAD_RES_OK == result) {
     create_guard(env, &payload);
     return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
@@ -142,7 +142,7 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   new_payload.capacity = new_size;
   new_payload.size = new_size;
 
-  result = shm_payload_create(&new_payload);
+  result = shm_payload_allocate(&new_payload);
   create_guard(env, &new_payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);

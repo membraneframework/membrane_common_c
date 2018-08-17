@@ -1,6 +1,24 @@
 #include "lib.h"
 
 /**
+ * Initializes ShmPayload C struct. Should be used before allocating shm from C code.
+ *
+ * Each call should be paired with `shm_payload_free` call to deallocate resources.
+ */
+void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, const char * name, unsigned capacity) {
+  payload->name_len = strlen(name);
+  payload->name = enif_alloc(payload->name_len + 1);
+  strncpy(payload->name, name, payload->name_len);
+  payload->name[payload->name_len] = '\0';
+
+  payload->guard = enif_make_atom(env, "nil");
+  payload->size = 0;
+  payload->capacity = capacity;
+  payload->mapped_memory = MAP_FAILED;
+  payload->elixir_struct_atom = enif_make_atom(env, SHM_PAYLOAD_ELIXIR_STRUCT_ATOM);
+}
+
+/**
  * Initializes ShmPayload C struct using data from Membrane.Payload.Shm Elixir struct
  *
  * Each call should be paired with `shm_payload_free` call to deallocate resources
@@ -69,7 +87,13 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   return 1;
 }
 
-ShmPayloadLibResult shm_payload_create(ShmPayload * payload) {
+/**
+ * Allocates POSIX shared memory given the data (name, capacity) in ShmPayload struct.
+ *
+ * Shared memory can be accessed by using 'shm_payload_open_and_mmap'.
+ * Memory will be unmapped when ShmPayload is freed ('shm_payload_free')
+ */
+ShmPayloadLibResult shm_payload_allocate(ShmPayload * payload) {
   ShmPayloadLibResult result;
   int fd = -1;
 
