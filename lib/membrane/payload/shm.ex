@@ -73,6 +73,15 @@ end
 
 defimpl Membrane.Payload, for: Membrane.Payload.Shm do
   alias Membrane.Payload.Shm
+  @spec empty_of_type(payload :: Shm.t()) :: Shm.t()
+  def empty_of_type(_payload) do
+    Shm.empty()
+  end
+
+  @spec new_of_type(payload :: Shm.t(), binary()) :: Shm.t()
+  def new_of_type(_payload, data) do
+    Shm.new(data)
+  end
 
   @spec size(payload :: Shm.t()) :: non_neg_integer
   def size(%Shm{size: size}) do
@@ -84,6 +93,12 @@ defimpl Membrane.Payload, for: Membrane.Payload.Shm do
     new_name = name <> "-2"
     {:ok, payloads} = Shm.Native.split_at(shm, %Shm{name: new_name}, at_pos)
     payloads
+  end
+
+  @spec concat(left :: Shm.t(), right :: Shm.t()) :: Shm.t()
+  def concat(left, right) do
+    {:ok, res} = Shm.Native.concat(left, right)
+    res
   end
 
   @spec to_binary(payload :: Shm.t()) :: binary()
