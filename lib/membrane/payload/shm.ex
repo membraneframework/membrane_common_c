@@ -67,7 +67,7 @@ defmodule Membrane.Payload.Shm do
   defdelegate set_capacity(payload, capacity), to: Native
 
   defp generate_name do
-    "/membrane_#{inspect(System.system_time(:nanosecond))}_#{inspect(:rand.uniform(100))}"
+    "/membrane-#{inspect(System.system_time(:nanosecond))}-#{inspect(:rand.uniform(100))}"
   end
 end
 

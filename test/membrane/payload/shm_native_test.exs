@@ -6,6 +6,11 @@ defmodule Membrane.Payload.Shm.NativeTest do
   @shm_name "/asdf"
   @shm_path Path.join("/dev/shm", @shm_name)
 
+  setup do
+    :erlang.garbage_collect()
+    :ok
+  end
+
   @tag :shm_tmpfs
   test "create/1" do
     shm = %Shm{name: @shm_name}
@@ -134,6 +139,31 @@ defmodule Membrane.Payload.Shm.NativeTest do
       assert @module.read(shm_b) == {:ok, data_b}
       assert shm_a.size == split_pos
       assert shm_b.size == data_size - split_pos
+    end
+  end
+
+  describe "concat/2" do
+    setup :testing_data
+
+    test "", %{data: data, data_size: data_size} do
+      name_a = @shm_name <> "a"
+      name_b = @shm_name <> "b"
+      assert {:ok, shm_a} = @module.create(%Shm{name: name_a})
+      assert {:ok, shm_a} = @module.write(shm_a, data)
+
+      assert {:ok, shm_b} = @module.create(%Shm{name: name_b})
+      assert {:ok, shm_b} = @module.write(shm_b, data)
+      assert {:ok, res_shm} = @module.concat(shm_a, shm_b)
+
+      shm_a = nil
+      shm_b = nil
+      assert shm_a == nil
+      assert shm_b == nil
+      :erlang.garbage_collect()
+
+      assert @module.read(res_shm) == {:ok, data <> data}
+      assert res_shm.size == 2 * data_size
+      assert res_shm.capacity == 2 * data_size
     end
   end
 

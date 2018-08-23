@@ -80,13 +80,13 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
   ERL_NIF_TERM return_term;
   if (cnt > payload.size) {
     return_term = membrane_util_make_error_args(env, "cnt", "cnt is greater than payload size");
-    goto read_exit;
+    goto exit_read;
   }
 
   ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
-    goto read_exit;
+    goto exit_read;
   }
 
   ERL_NIF_TERM out_bin_term;
@@ -94,7 +94,7 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
   memcpy(output_data, payload.mapped_memory, cnt);
 
   return_term = membrane_util_make_ok_tuple(env, out_bin_term);
-read_exit:
+exit_read:
   shm_payload_free(&payload);
   return return_term;
 }
@@ -112,13 +112,13 @@ static ERL_NIF_TERM export_write(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
   ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
-    goto write_exit;
+    goto exit_write;
   }
 
   memcpy(payload.mapped_memory, (void *)data.data, data.size);
   payload.size = data.size;
   return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
-write_exit:
+exit_write:
   shm_payload_free(&payload);
   return return_term;
 }
@@ -135,7 +135,7 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   ShmPayloadLibResult result = shm_payload_open_and_mmap(&old_payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
-    goto split_at_exit;
+    goto exit_split_at;
   }
 
   int new_size = old_payload.size - split_pos;
@@ -146,13 +146,13 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   create_guard(env, &new_payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
-    goto split_at_exit;
+    goto exit_split_at;
   }
 
   result = shm_payload_open_and_mmap(&new_payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
-    goto split_at_exit;
+    goto exit_split_at;
   }
 
   memcpy(new_payload.mapped_memory, old_payload.mapped_memory + split_pos, new_size);
@@ -168,12 +168,47 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
     )
   );
 
-split_at_exit:
+exit_split_at:
   if (new_fd > 0) {
     close(new_fd);
   }
   shm_payload_free(&old_payload);
   shm_payload_free(&new_payload);
+  return return_term;
+}
+
+static ERL_NIF_TERM export_concat(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  UNUSED(argc);
+  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, left);
+  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(1, right);
+  ERL_NIF_TERM return_term;
+  ShmPayloadLibResult result;
+
+  size_t new_capacity = left.size + right.size;
+  result = shm_payload_set_capacity(&left, new_capacity);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_concat;
+  }
+
+  result = shm_payload_open_and_mmap(&left);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_concat;
+  }
+
+  result = shm_payload_open_and_mmap(&right);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_concat;
+  }
+
+  memcpy(left.mapped_memory + left.size, right.mapped_memory, right.size);
+  left.size = new_capacity;
+  return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &left));
+exit_concat:
+  shm_payload_free(&left);
+  shm_payload_free(&right);
   return return_term;
 }
 
@@ -184,6 +219,7 @@ static ErlNifFunc nif_funcs[] = {
   {"read", 2, export_read, 0},
   {"write", 2, export_write, 0},
   {"split_at", 3, export_split_at, 0},
+  {"concat", 2, export_concat, 0}
 };
 
 ERL_NIF_INIT(Elixir.Membrane.Payload.Shm.Native.Nif, nif_funcs, load, NULL, NULL, NULL)

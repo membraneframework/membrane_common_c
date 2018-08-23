@@ -72,4 +72,7 @@ defmodule Membrane.Payload.Shm.Native do
   @spec split_at(payload :: Shm.t(), new_payload :: Shm.t(), position :: non_neg_integer()) ::
           Type.try_t({Shm.t(), Shm.t()})
   defnif split_at(payload, new_payload, position)
+
+  @spec concat(left :: Shm.t(), right :: Shm.t()) :: Type.try_t(Shm.t())
+  defnif concat(left, right)
 end
