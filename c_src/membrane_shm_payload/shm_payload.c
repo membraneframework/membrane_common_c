@@ -177,6 +177,28 @@ exit_split_at:
   return return_term;
 }
 
+static ERL_NIF_TERM export_trim_leading(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  UNUSED(argc);
+  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
+  MEMBRANE_UTIL_PARSE_UINT_ARG(1, offset);
+  ERL_NIF_TERM return_term;
+  ShmPayloadLibResult result;
+
+  result = shm_payload_open_and_mmap(&payload);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_trim_leading;
+  }
+
+  size_t new_size = payload.size - offset;
+  memmove(payload.mapped_memory, payload.mapped_memory + offset, new_size);
+  payload.size = new_size;
+  return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
+exit_trim_leading:
+  shm_payload_free(&payload);
+  return return_term;
+}
+
 static ERL_NIF_TERM export_concat(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   UNUSED(argc);
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, left);
@@ -219,7 +241,8 @@ static ErlNifFunc nif_funcs[] = {
   {"read", 2, export_read, 0},
   {"write", 2, export_write, 0},
   {"split_at", 3, export_split_at, 0},
-  {"concat", 2, export_concat, 0}
+  {"concat", 2, export_concat, 0},
+  {"trim_leading", 2, export_trim_leading, 0}
 };
 
 ERL_NIF_INIT(Elixir.Membrane.Payload.Shm.Native.Nif, nif_funcs, load, NULL, NULL, NULL)

@@ -11,6 +11,8 @@ defmodule Membrane.Payload.Shm.NativeTest do
     :ok
   end
 
+  setup :testing_data
+
   @tag :shm_tmpfs
   test "create/1" do
     shm = %Shm{name: @shm_name}
@@ -123,48 +125,79 @@ defmodule Membrane.Payload.Shm.NativeTest do
     end
   end
 
-  describe "split_at/3" do
-    setup :testing_data
+  test "split_at/3", %{data: data, data_size: data_size} do
+    assert {:ok, shm_a} = @module.create(%Shm{name: @shm_name})
+    assert {:ok, shm_a} = @module.write(shm_a, data)
 
-    test "", %{data: data, data_size: data_size} do
-      assert {:ok, shm_a} = @module.create(%Shm{name: @shm_name})
-      assert {:ok, shm_a} = @module.write(shm_a, data)
+    new_name = @shm_name <> "2"
+    split_pos = 6
+    assert {:ok, {shm_a, shm_b}} = @module.split_at(shm_a, %Shm{name: new_name}, split_pos)
 
-      new_name = @shm_name <> "2"
-      split_pos = 6
-      assert {:ok, {shm_a, shm_b}} = @module.split_at(shm_a, %Shm{name: new_name}, split_pos)
-
-      <<data_a::binary-size(split_pos), data_b::binary>> = data
-      assert @module.read(shm_a) == {:ok, data_a}
-      assert @module.read(shm_b) == {:ok, data_b}
-      assert shm_a.size == split_pos
-      assert shm_b.size == data_size - split_pos
-    end
+    <<data_a::binary-size(split_pos), data_b::binary>> = data
+    assert @module.read(shm_a) == {:ok, data_a}
+    assert @module.read(shm_b) == {:ok, data_b}
+    assert shm_a.size == split_pos
+    assert shm_b.size == data_size - split_pos
   end
 
-  describe "concat/2" do
-    setup :testing_data
+  test "concat/2", %{data: data, data_size: data_size} do
+    name_a = @shm_name <> "a"
+    name_b = @shm_name <> "b"
+    assert {:ok, shm_a} = @module.create(%Shm{name: name_a})
+    assert {:ok, shm_a} = @module.write(shm_a, data)
 
-    test "", %{data: data, data_size: data_size} do
-      name_a = @shm_name <> "a"
-      name_b = @shm_name <> "b"
-      assert {:ok, shm_a} = @module.create(%Shm{name: name_a})
-      assert {:ok, shm_a} = @module.write(shm_a, data)
+    assert {:ok, shm_b} = @module.create(%Shm{name: name_b})
+    assert {:ok, shm_b} = @module.write(shm_b, data)
+    assert {:ok, res_shm} = @module.concat(shm_a, shm_b)
 
-      assert {:ok, shm_b} = @module.create(%Shm{name: name_b})
-      assert {:ok, shm_b} = @module.write(shm_b, data)
-      assert {:ok, res_shm} = @module.concat(shm_a, shm_b)
+    shm_a = nil
+    shm_b = nil
+    assert shm_a == nil
+    assert shm_b == nil
+    :erlang.garbage_collect()
 
-      shm_a = nil
-      shm_b = nil
-      assert shm_a == nil
-      assert shm_b == nil
-      :erlang.garbage_collect()
+    assert @module.read(res_shm) == {:ok, data <> data}
+    assert res_shm.size == 2 * data_size
+    assert res_shm.capacity == 2 * data_size
+  end
 
-      assert @module.read(res_shm) == {:ok, data <> data}
-      assert res_shm.size == 2 * data_size
-      assert res_shm.capacity == 2 * data_size
-    end
+  @tag :shm_tmpfs
+  test "trim/1", %{data: data, data_size: data_size} do
+    capacity = 500
+    assert capacity != data_size
+    assert {:ok, shm} = @module.create(%Shm{name: @shm_name, capacity: capacity})
+    assert {:ok, shm} = @module.write(shm, data)
+
+    assert {:ok, stat} = File.stat(@shm_path)
+    assert stat.size == capacity
+
+    assert {:ok, shm} = @module.trim(shm)
+    assert {:ok, stat} = File.stat(@shm_path)
+    assert stat.size == data_size
+    assert shm.capacity == stat.size
+    assert shm.capacity == shm.size
+  end
+
+  @tag :shm_tmpfs
+  test "trim/2", %{data: data, data_size: data_size} do
+    capacity = 500
+    offset = 13
+    assert capacity != data_size
+    assert offset < data_size
+    assert {:ok, shm} = @module.create(%Shm{name: @shm_name, capacity: capacity})
+    assert {:ok, shm} = @module.write(shm, data)
+
+    assert {:ok, stat} = File.stat(@shm_path)
+    assert stat.size == capacity
+
+    assert {:ok, shm} = @module.trim(shm, offset)
+    assert {:ok, stat} = File.stat(@shm_path)
+    assert stat.size == data_size - offset
+    assert shm.size == data_size - offset
+    assert shm.capacity == shm.size
+
+    <<_discarded::binary-size(offset), trimmed_data::binary>> = data
+    assert @module.read(shm) == {:ok, trimmed_data}
   end
 
   def testing_data(_) do

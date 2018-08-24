@@ -33,7 +33,7 @@ defmodule Membrane.Payload.Shm.Native do
   @doc """
   Sets the capacity of SHM and updates the struct accordingly
   """
-  @spec set_capacity(payload :: Shm.t(), capacity :: pos_integer()) :: Type.try_t()
+  @spec set_capacity(payload :: Shm.t(), capacity :: pos_integer()) :: Type.try_t(Shm.t())
   defnif set_capacity(payload, capacity)
 
   @doc """
@@ -75,4 +75,19 @@ defmodule Membrane.Payload.Shm.Native do
 
   @spec concat(left :: Shm.t(), right :: Shm.t()) :: Type.try_t(Shm.t())
   defnif concat(left, right)
+
+  @spec trim(payload :: Shm.t()) :: Type.try_t()
+  def trim(%Shm{size: size} = shm) do
+    shm |> set_capacity(size)
+  end
+
+  @spec trim(payload :: Shm.t(), bytes :: non_neg_integer) :: Type.try_t()
+  def trim(payload, bytes) do
+    with {:ok, trimmed_front} <- trim_leading(payload, bytes),
+         {:ok, result} <- trim(trimmed_front) do
+      {:ok, result}
+    end
+  end
+
+  defnifp trim_leading(payload, offset)
 end

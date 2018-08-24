@@ -64,7 +64,10 @@ defmodule Membrane.Payload.Shm do
   If the capacity is smaller than the current size, data will be discarded and size modified
   """
   @spec set_capacity(t(), pos_integer()) :: t()
-  defdelegate set_capacity(payload, capacity), to: Native
+  def set_capacity(payload, capacity) do
+    {:ok, new_payload} = Native.set_capacity(payload, capacity)
+    new_payload
+  end
 
   defp generate_name do
     "/membrane-#{inspect(System.system_time(:nanosecond))}-#{inspect(:rand.uniform(100))}"
@@ -73,16 +76,6 @@ end
 
 defimpl Membrane.Payload, for: Membrane.Payload.Shm do
   alias Membrane.Payload.Shm
-  @spec empty_of_type(payload :: Shm.t()) :: Shm.t()
-  def empty_of_type(_payload) do
-    Shm.empty()
-  end
-
-  @spec new_of_type(payload :: Shm.t(), binary()) :: Shm.t()
-  def new_of_type(_payload, data) do
-    Shm.new(data)
-  end
-
   @spec size(payload :: Shm.t()) :: non_neg_integer
   def size(%Shm{size: size}) do
     size
