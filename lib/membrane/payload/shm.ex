@@ -94,6 +94,12 @@ defimpl Membrane.Payload, for: Membrane.Payload.Shm do
     res
   end
 
+  @spec drop(payload :: Shm.t(), n :: non_neg_integer()) :: Shm.t()
+  def drop(payload, n) do
+    {:ok, new_payload} = Shm.Native.trim(payload, n)
+    new_payload
+  end
+
   @spec to_binary(payload :: Shm.t()) :: binary()
   def to_binary(payload) do
     {:ok, bin} = Shm.Native.read(payload)
