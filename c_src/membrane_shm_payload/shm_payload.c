@@ -27,7 +27,7 @@ static void create_guard(ErlNifEnv * env, ShmPayload *payload) {
   enif_release_resource(guard);
 }
 
-static ERL_NIF_TERM export_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+static ERL_NIF_TERM export_allocate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   UNUSED(argc);
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
   ERL_NIF_TERM return_term;
@@ -235,7 +235,7 @@ exit_concat:
 }
 
 static ErlNifFunc nif_funcs[] = {
-  {"create", 1, export_create, 0},
+  {"allocate", 1, export_allocate, 0},
   {"add_guard", 1, export_add_guard, 0},
   {"set_capacity", 2, export_set_capacity, 0},
   {"read", 2, export_read, 0},

@@ -37,7 +37,7 @@ typedef enum ShmPayloadLibResult {
 void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, const char * name, unsigned capacity);
 int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload * payload);
 ShmPayloadLibResult shm_payload_allocate(ShmPayload * payload);
-void shm_payload_free(ShmPayload *payload);
+void shm_payload_release(ShmPayload *payload);
 ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload);
 ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult result);
 ShmPayloadLibResult shm_payload_set_capacity(ShmPayload * payload, size_t capacity);

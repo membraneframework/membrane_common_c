@@ -3,7 +3,7 @@
 /**
  * Initializes ShmPayload C struct. Should be used before allocating shm from C code.
  *
- * Each call should be paired with `shm_payload_free` call to deallocate resources.
+ * Each call should be paired with `shm_payload_release` call to deallocate resources.
  */
 void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, const char * name, unsigned capacity) {
   payload->name_len = strlen(name);
@@ -21,7 +21,7 @@ void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, const char * name, 
 /**
  * Initializes ShmPayload C struct using data from Membrane.Payload.Shm Elixir struct
  *
- * Each call should be paired with `shm_payload_free` call to deallocate resources
+ * Each call should be paired with `shm_payload_release` call to deallocate resources
  */
 int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayload *payload) {
   const ERL_NIF_TERM ATOM_STRUCT_TAG = enif_make_atom(env, "__struct__");
@@ -91,7 +91,7 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
  * Allocates POSIX shared memory given the data (name, capacity) in ShmPayload struct.
  *
  * Shared memory can be accessed by using 'shm_payload_open_and_mmap'.
- * Memory will be unmapped when ShmPayload is freed ('shm_payload_free')
+ * Memory will be unmapped when ShmPayload struct is freed (by 'shm_payload_release')
  */
 ShmPayloadLibResult shm_payload_allocate(ShmPayload * payload) {
   ShmPayloadLibResult result;
@@ -123,11 +123,12 @@ shm_payload_create_exit:
 }
 
 /**
- * Frees resources allocated by `shm_payload_get_from_term`
+ * Deallocates resources owned by ShmPayload struct. It does not
+ * free the actual shared memory segment, just object representing it.
  *
  * If payload was mapped, unmaps it as well.
  */
-void shm_payload_free(ShmPayload *payload) {
+void shm_payload_release(ShmPayload *payload) {
   if (payload->name != NULL) {
     enif_free(payload->name);
   }
@@ -182,6 +183,8 @@ ERL_NIF_TERM shm_payload_make_error_term(ErlNifEnv * env, ShmPayloadLibResult re
       return membrane_util_make_error_errno(env, "ftruncate");
     case SHM_PAYLOAD_ERROR_MMAP:
       return membrane_util_make_error_errno(env, "mmap");
+    case SHM_PAYLOAD_ERROR_NAME_TOO_LONG:
+      return membrane_util_make_error(env, enif_make_atom(env, "name_too_long"));
     case SHM_PAYLOAD_ERROR_SHM_MAPPED:
       return membrane_util_make_error_internal(env, "shm_is_mapped");
     default:
@@ -233,7 +236,7 @@ shm_payload_set_capacity_exit:
  * On success sets payload->mapped_memory to a valid pointer. On failure it is set to
  * MAP_FAILED ((void *)-1) and returned result indicates which function failed.
  *
- * Mapped memory has to be released with either 'shm_payload_free' or 'shm_payload_unmap'.
+ * Mapped memory has to be released with either 'shm_payload_release' or 'shm_payload_unmap'.
  *
  * While memory is mapped the capacity of shm must not be modified.
  */
