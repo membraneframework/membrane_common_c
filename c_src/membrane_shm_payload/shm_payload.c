@@ -40,7 +40,7 @@ static ERL_NIF_TERM export_allocate(ErlNifEnv* env, int argc, const ERL_NIF_TERM
     return_term = shm_payload_make_error_term(env, result);
   }
 
-  shm_payload_free(&payload);
+  shm_payload_release(&payload);
   return return_term;
 }
 
@@ -68,7 +68,7 @@ static ERL_NIF_TERM export_set_capacity(ErlNifEnv* env, int argc, const ERL_NIF_
   } else {
     return_term = shm_payload_make_error_term(env, result);
   }
-  shm_payload_free(&payload);
+  shm_payload_release(&payload);
   return return_term;
 }
 
@@ -95,7 +95,7 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
   return_term = membrane_util_make_ok_tuple(env, out_bin_term);
 exit_read:
-  shm_payload_free(&payload);
+  shm_payload_release(&payload);
   return return_term;
 }
 
@@ -119,7 +119,7 @@ static ERL_NIF_TERM export_write(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
   payload.size = data.size;
   return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
 exit_write:
-  shm_payload_free(&payload);
+  shm_payload_release(&payload);
   return return_term;
 }
 
@@ -172,8 +172,8 @@ exit_split_at:
   if (new_fd > 0) {
     close(new_fd);
   }
-  shm_payload_free(&old_payload);
-  shm_payload_free(&new_payload);
+  shm_payload_release(&old_payload);
+  shm_payload_release(&new_payload);
   return return_term;
 }
 
@@ -195,7 +195,7 @@ static ERL_NIF_TERM export_trim_leading(ErlNifEnv* env, int argc, const ERL_NIF_
   payload.size = new_size;
   return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
 exit_trim_leading:
-  shm_payload_free(&payload);
+  shm_payload_release(&payload);
   return return_term;
 }
 
@@ -229,8 +229,8 @@ static ERL_NIF_TERM export_concat(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
   left.size = new_capacity;
   return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &left));
 exit_concat:
-  shm_payload_free(&left);
-  shm_payload_free(&right);
+  shm_payload_release(&left);
+  shm_payload_release(&right);
   return return_term;
 }
 

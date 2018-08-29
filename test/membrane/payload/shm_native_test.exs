@@ -16,7 +16,7 @@ defmodule Membrane.Payload.Shm.NativeTest do
   @tag :shm_tmpfs
   test "create/1" do
     shm = %Shm{name: @shm_name}
-    assert {:ok, new_shm} = @module.create(shm)
+    assert {:ok, new_shm} = @module.allocate(shm)
     assert new_shm.name == shm.name
     assert new_shm.guard != nil
     assert is_reference(new_shm.guard)
@@ -36,7 +36,7 @@ defmodule Membrane.Payload.Shm.NativeTest do
     end
 
     test "when shm is already guarded" do
-      assert {:ok, shm} = @module.create(%Shm{name: @shm_name})
+      assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name})
       assert @module.add_guard(shm) == {:error, :already_guarded}
     end
   end
@@ -44,7 +44,7 @@ defmodule Membrane.Payload.Shm.NativeTest do
   @tag :shm_tmpfs
   test "set_capacity/2" do
     new_capacity = 69
-    assert {:ok, shm} = @module.create(%Shm{name: @shm_name})
+    assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name})
     assert shm.capacity != new_capacity
     assert {:ok, shm} = @module.set_capacity(shm, new_capacity)
     assert shm.capacity == new_capacity
@@ -61,7 +61,7 @@ defmodule Membrane.Payload.Shm.NativeTest do
 
     test "when written data size is smaller than capacity", %{data: data, data_size: data_size} do
       capacity = data_size + 10
-      assert {:ok, shm} = @module.create(%Shm{name: @shm_name, capacity: capacity})
+      assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name, capacity: capacity})
       assert {:ok, shm} = @module.write(shm, data)
 
       assert {:ok, stat} = File.stat(@shm_path)
@@ -78,7 +78,7 @@ defmodule Membrane.Payload.Shm.NativeTest do
     test "when written data size is greater than capacity", %{data: data, data_size: data_size} do
       capacity = data_size - 6
       assert capacity < data_size
-      assert {:ok, shm} = @module.create(%Shm{name: @shm_name, capacity: capacity})
+      assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name, capacity: capacity})
       assert {:ok, shm} = @module.write(shm, data)
 
       assert {:ok, stat} = File.stat(@shm_path)
@@ -94,12 +94,12 @@ defmodule Membrane.Payload.Shm.NativeTest do
     setup :testing_data
 
     test "from empty shm" do
-      assert {:ok, shm} = @module.create(%Shm{name: @shm_name})
+      assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name})
       assert @module.read(shm) == {:ok, ""}
     end
 
     test "from non-empty shm", %{data: data} do
-      assert {:ok, shm} = @module.create(%Shm{name: @shm_name})
+      assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name})
       assert {:ok, shm} = @module.write(shm, data)
 
       assert @module.read(shm) == {:ok, data}
@@ -110,13 +110,13 @@ defmodule Membrane.Payload.Shm.NativeTest do
     setup :testing_data
 
     test "of size 0", %{data: data} do
-      assert {:ok, shm} = @module.create(%Shm{name: @shm_name})
+      assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name})
       assert {:ok, shm} = @module.write(shm, data)
       assert @module.read(shm, 0) == {:ok, ""}
     end
 
     test "of size smaller than data size", %{data: data} do
-      assert {:ok, shm} = @module.create(%Shm{name: @shm_name})
+      assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name})
       assert {:ok, shm} = @module.write(shm, data)
       size = 6
       assert {:ok, data_read} = @module.read(shm, size)
@@ -126,7 +126,7 @@ defmodule Membrane.Payload.Shm.NativeTest do
   end
 
   test "split_at/3", %{data: data, data_size: data_size} do
-    assert {:ok, shm_a} = @module.create(%Shm{name: @shm_name})
+    assert {:ok, shm_a} = @module.allocate(%Shm{name: @shm_name})
     assert {:ok, shm_a} = @module.write(shm_a, data)
 
     new_name = @shm_name <> "2"
@@ -143,10 +143,10 @@ defmodule Membrane.Payload.Shm.NativeTest do
   test "concat/2", %{data: data, data_size: data_size} do
     name_a = @shm_name <> "a"
     name_b = @shm_name <> "b"
-    assert {:ok, shm_a} = @module.create(%Shm{name: name_a})
+    assert {:ok, shm_a} = @module.allocate(%Shm{name: name_a})
     assert {:ok, shm_a} = @module.write(shm_a, data)
 
-    assert {:ok, shm_b} = @module.create(%Shm{name: name_b})
+    assert {:ok, shm_b} = @module.allocate(%Shm{name: name_b})
     assert {:ok, shm_b} = @module.write(shm_b, data)
     assert {:ok, res_shm} = @module.concat(shm_a, shm_b)
 
@@ -165,7 +165,7 @@ defmodule Membrane.Payload.Shm.NativeTest do
   test "trim/1", %{data: data, data_size: data_size} do
     capacity = 500
     assert capacity != data_size
-    assert {:ok, shm} = @module.create(%Shm{name: @shm_name, capacity: capacity})
+    assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name, capacity: capacity})
     assert {:ok, shm} = @module.write(shm, data)
 
     assert {:ok, stat} = File.stat(@shm_path)
@@ -184,7 +184,7 @@ defmodule Membrane.Payload.Shm.NativeTest do
     offset = 13
     assert capacity != data_size
     assert offset < data_size
-    assert {:ok, shm} = @module.create(%Shm{name: @shm_name, capacity: capacity})
+    assert {:ok, shm} = @module.allocate(%Shm{name: @shm_name, capacity: capacity})
     assert {:ok, shm} = @module.write(shm, data)
 
     assert {:ok, stat} = File.stat(@shm_path)
