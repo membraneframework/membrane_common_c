@@ -63,15 +63,14 @@ defmodule Membrane.Payload.Shm.Native do
   @doc """
   Splits the contents of SHM into 2 by moving part of the data into a new SHM
 
-  `payload` has to be an existing shm (obtained via `create/1`) while `new_payload` has to be
-  a struct describing shm that will be created by this function.
+  `payload` has to be an existing shm (obtained via `allocate/1`).
 
   It virtually trims the existing SHM to `position` bytes by setting `size` to `position`
   (The actual data is still present) and the overlapping data is copied into the new SHM.
   """
-  @spec split_at(payload :: Shm.t(), new_payload :: Shm.t(), position :: non_neg_integer()) ::
+  @spec split_at(payload :: Shm.t(), position :: non_neg_integer()) ::
           Type.try_t({Shm.t(), Shm.t()})
-  defnif split_at(payload, new_payload, position)
+  defnif split_at(payload, position)
 
   @spec concat(left :: Shm.t(), right :: Shm.t()) :: Type.try_t(Shm.t())
   defnif concat(left, right)

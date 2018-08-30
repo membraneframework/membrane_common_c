@@ -1,21 +1,34 @@
 #include "lib.h"
 
+void shm_payload_generate_name(ShmPayload * payload) {
+  static const unsigned GENERATED_NAME_SIZE = strlen(SHM_NAME_PREFIX) + 21;
+  if (payload->name_size < GENERATED_NAME_SIZE) {
+    if (payload->name != NULL) {
+      enif_free(payload->name);
+    }
+    payload->name = enif_alloc(GENERATED_NAME_SIZE);
+    payload->name_size = GENERATED_NAME_SIZE;
+  }
+
+  struct timespec ts;
+  timespec_get(&ts, TIME_UTC);
+  snprintf(payload->name, payload->name_size, SHM_NAME_PREFIX "%.12ld%.8ld", ts.tv_sec, ts.tv_nsec);
+}
+
 /**
  * Initializes ShmPayload C struct. Should be used before allocating shm from C code.
  *
  * Each call should be paired with `shm_payload_release` call to deallocate resources.
  */
-void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, const char * name, unsigned capacity) {
-  payload->name_len = strlen(name);
-  payload->name = enif_alloc(payload->name_len + 1);
-  strncpy(payload->name, name, payload->name_len);
-  payload->name[payload->name_len] = '\0';
-
+void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, unsigned capacity) {
   payload->guard = enif_make_atom(env, "nil");
   payload->size = 0;
   payload->capacity = capacity;
   payload->mapped_memory = MAP_FAILED;
   payload->elixir_struct_atom = enif_make_atom(env, SHM_PAYLOAD_ELIXIR_STRUCT_ATOM);
+  payload->name = NULL;
+  payload->name_size = 0;
+  shm_payload_generate_name(payload);
 }
 
 /**
@@ -74,6 +87,18 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   if (!result) {
     return 0;
   }
+  char atom_tmp[4];
+  result = enif_get_atom(env, tmp_term, atom_tmp, 4, ERL_NIF_LATIN1);
+  if (result) {
+    if (strncmp(atom_tmp, "nil", 3) == 0) {
+      payload->name = NULL;
+      payload->name_size = 0;
+      return 1;
+    }
+
+    return 0;
+  }
+
   ErlNifBinary name_binary;
   result = enif_inspect_binary(env, tmp_term, &name_binary);
   if (!result) {
@@ -82,7 +107,7 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   payload->name = enif_alloc(name_binary.size + 1);
   memcpy(payload->name, (char *) name_binary.data, name_binary.size);
   payload->name[name_binary.size] = '\0';
-  payload->name_len = name_binary.size;
+  payload->name_size = name_binary.size + 1;
 
   return 1;
 }
@@ -97,15 +122,19 @@ ShmPayloadLibResult shm_payload_allocate(ShmPayload * payload) {
   ShmPayloadLibResult result;
   int fd = -1;
 
-  if (payload->name_len > NAME_MAX) {
+  if (payload->name_size >= NAME_MAX) {
     result = SHM_PAYLOAD_ERROR_NAME_TOO_LONG;
     goto shm_payload_create_exit;
   }
 
   fd = shm_open(payload->name, O_RDWR | O_CREAT | O_EXCL, 0666);
-  if (fd < 0) {
-    result = SHM_PAYLOAD_ERROR_SHM_OPEN;
-    goto shm_payload_create_exit;
+  while (fd < 0) {
+    if (errno != EEXIST) {
+      result = SHM_PAYLOAD_ERROR_SHM_OPEN;
+      goto shm_payload_create_exit;
+    }
+    shm_payload_generate_name(payload);
+    fd = shm_open(payload->name, O_RDWR | O_CREAT | O_EXCL, 0666);
   }
 
   int ftr_res = ftruncate(fd, payload->capacity);
@@ -149,8 +178,8 @@ ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload) {
   };
 
   ERL_NIF_TERM name_term;
-  void * name_ptr = enif_make_new_binary(env, payload->name_len, &name_term);
-  memcpy(name_ptr, payload->name, payload->name_len);
+  void * name_ptr = enif_make_new_binary(env, payload->name_size - 1, &name_term);
+  memcpy(name_ptr, payload->name, payload->name_size - 1);
 
   ERL_NIF_TERM values[SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES] = {
     payload->elixir_struct_atom,

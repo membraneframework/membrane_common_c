@@ -1,5 +1,4 @@
 #include "shm_payload.h"
-#include "lib.h"
 
 ErlNifResourceType *RES_SHM_PAYLOAD_GUARD_TYPE;
 
@@ -32,6 +31,9 @@ static ERL_NIF_TERM export_allocate(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
   ERL_NIF_TERM return_term;
 
+  if (payload.name == NULL) {
+    shm_payload_generate_name(&payload);
+  }
   ShmPayloadLibResult result = shm_payload_allocate(&payload);
   if (SHM_PAYLOAD_RES_OK == result) {
     create_guard(env, &payload);
@@ -126,8 +128,9 @@ exit_write:
 static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   UNUSED(argc);
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, old_payload);
-  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(1, new_payload);
-  MEMBRANE_UTIL_PARSE_UINT_ARG(2, split_pos);
+  MEMBRANE_UTIL_PARSE_UINT_ARG(1, split_pos);
+  ShmPayload new_payload;
+  shm_payload_init(env, &new_payload, 4096);
 
   ERL_NIF_TERM return_term;
   int new_fd = -1;
@@ -240,7 +243,7 @@ static ErlNifFunc nif_funcs[] = {
   {"set_capacity", 2, export_set_capacity, 0},
   {"read", 2, export_read, 0},
   {"write", 2, export_write, 0},
-  {"split_at", 3, export_split_at, 0},
+  {"split_at", 2, export_split_at, 0},
   {"concat", 2, export_concat, 0},
   {"trim_leading", 2, export_trim_leading, 0}
 };

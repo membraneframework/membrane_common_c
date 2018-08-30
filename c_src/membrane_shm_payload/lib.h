@@ -11,10 +11,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <time.h>
+#include <stdio.h>
 
 typedef struct {
   char * name;
-  size_t name_len;
+  size_t name_size;
   ERL_NIF_TERM guard;
   unsigned int size;
   unsigned int capacity;
@@ -24,6 +26,7 @@ typedef struct {
 
 #define SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES 5
 #define SHM_PAYLOAD_ELIXIR_STRUCT_ATOM "Elixir.Membrane.Payload.Shm"
+#define SHM_NAME_PREFIX "/membrane-"
 
 typedef enum ShmPayloadLibResult {
   SHM_PAYLOAD_RES_OK,
@@ -34,7 +37,8 @@ typedef enum ShmPayloadLibResult {
   SHM_PAYLOAD_ERROR_NAME_TOO_LONG
 } ShmPayloadLibResult;
 
-void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, const char * name, unsigned capacity);
+void shm_payload_generate_name(ShmPayload * payload);
+void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, unsigned capacity);
 int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM record, ShmPayload * payload);
 ShmPayloadLibResult shm_payload_allocate(ShmPayload * payload);
 void shm_payload_release(ShmPayload *payload);

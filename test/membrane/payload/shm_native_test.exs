@@ -125,13 +125,12 @@ defmodule Membrane.Payload.Shm.NativeTest do
     end
   end
 
-  test "split_at/3", %{data: data, data_size: data_size} do
+  test "split_at/2", %{data: data, data_size: data_size} do
     assert {:ok, shm_a} = @module.allocate(%Shm{name: @shm_name})
     assert {:ok, shm_a} = @module.write(shm_a, data)
 
-    new_name = @shm_name <> "2"
     split_pos = 6
-    assert {:ok, {shm_a, shm_b}} = @module.split_at(shm_a, %Shm{name: new_name}, split_pos)
+    assert {:ok, {shm_a, shm_b}} = @module.split_at(shm_a, split_pos)
 
     <<data_a::binary-size(split_pos), data_b::binary>> = data
     assert @module.read(shm_a) == {:ok, data_a}

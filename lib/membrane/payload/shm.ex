@@ -25,7 +25,6 @@ defmodule Membrane.Payload.Shm do
           capacity: pos_integer()
         }
 
-  @enforce_keys [:name]
   defstruct name: nil, guard: nil, size: 0, capacity: 4096
 
   @impl true
@@ -77,19 +76,9 @@ defmodule Membrane.Payload.Shm do
     new_payload
   end
 
-  @doc false
-  def generate_name do
-    "/membrane-#{inspect(System.system_time(:nanosecond))}-#{inspect(:rand.uniform(100))}"
-  end
-
   defp create(capacity) do
-    shm_struct = %__MODULE__{name: generate_name(), capacity: capacity}
-
-    case Native.allocate(shm_struct) do
-      {:ok, payload} -> {:ok, payload}
-      {:error, {:eexist, :shm_open}} -> create(capacity)
-      err -> err
-    end
+    shm_struct = %__MODULE__{capacity: capacity}
+    Native.allocate(shm_struct)
   end
 end
 
@@ -109,8 +98,7 @@ defimpl Membrane.Payload, for: Membrane.Payload.Shm do
 
   @spec split_at(payload :: Shm.t(), pos_integer) :: {Shm.t(), Shm.t()}
   def split_at(%Shm{size: size} = shm, at_pos) when 0 < at_pos and at_pos < size do
-    new_name = Shm.generate_name()
-    {:ok, payloads} = Shm.Native.split_at(shm, %Shm{name: new_name}, at_pos)
+    {:ok, payloads} = Shm.Native.split_at(shm, at_pos)
     payloads
   end
 
