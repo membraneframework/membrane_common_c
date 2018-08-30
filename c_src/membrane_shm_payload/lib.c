@@ -128,8 +128,10 @@ ShmPayloadLibResult shm_payload_allocate(ShmPayload * payload) {
   }
 
   fd = shm_open(payload->name, O_RDWR | O_CREAT | O_EXCL, 0666);
+  int attempts = SHM_PAYLOAD_ALLOC_MAX_ATTEMPTS;
   while (fd < 0) {
-    if (errno != EEXIST) {
+    attempts--;
+    if (errno != EEXIST || attempts <= 0) {
       result = SHM_PAYLOAD_ERROR_SHM_OPEN;
       goto shm_payload_create_exit;
     }

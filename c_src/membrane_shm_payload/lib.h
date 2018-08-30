@@ -27,6 +27,7 @@ typedef struct {
 #define SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES 5
 #define SHM_PAYLOAD_ELIXIR_STRUCT_ATOM "Elixir.Membrane.Payload.Shm"
 #define SHM_NAME_PREFIX "/membrane-"
+#define SHM_PAYLOAD_ALLOC_MAX_ATTEMPTS 1000
 
 typedef enum ShmPayloadLibResult {
   SHM_PAYLOAD_RES_OK,
