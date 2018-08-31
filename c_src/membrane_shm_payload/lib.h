@@ -16,7 +16,6 @@
 
 typedef struct {
   char * name;
-  size_t name_size;
   ERL_NIF_TERM guard;
   unsigned int size;
   unsigned int capacity;
@@ -34,8 +33,7 @@ typedef enum ShmPayloadLibResult {
   SHM_PAYLOAD_ERROR_SHM_OPEN,
   SHM_PAYLOAD_ERROR_FTRUNCATE,
   SHM_PAYLOAD_ERROR_MMAP,
-  SHM_PAYLOAD_ERROR_SHM_MAPPED,
-  SHM_PAYLOAD_ERROR_NAME_TOO_LONG
+  SHM_PAYLOAD_ERROR_SHM_MAPPED
 } ShmPayloadLibResult;
 
 void shm_payload_generate_name(ShmPayload * payload);
