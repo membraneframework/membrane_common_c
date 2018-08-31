@@ -31,7 +31,7 @@ defmodule Membrane.Common.C.Mixfile do
     [
       maintainers: ["Membrane Team"],
       licenses: ["Apache 2.0"],
-      files: ["c_src", "mix.exs", "README*", "LICENSE*", ".formatter.exs", "bundlex.exs"],
+      files: ["lib", "c_src", "mix.exs", "README*", "LICENSE*", ".formatter.exs", "bundlex.exs"],
       links: %{
         "GitHub" => link(),
         "Membrane Framework Homepage" => "https://membraneframework.org"

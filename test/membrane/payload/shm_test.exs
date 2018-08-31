@@ -24,8 +24,8 @@ defmodule Membrane.Payload.Shm.ProtocolImplTest do
       end)
     end
 
-    test "Payload.type/1 should return :shm atom", %{shm: shm} do
-      assert Payload.type(shm) == :shm
+    test "Payload.module/1 should return Shm module", %{shm: shm} do
+      assert Payload.module(shm) == Shm
     end
   end
 
@@ -70,8 +70,8 @@ defmodule Membrane.Payload.Shm.ProtocolImplTest do
       assert Payload.to_binary(shm_tail) == content_tail
     end
 
-    test "Payload.type/1 should return :shm atom", %{shm: shm} do
-      assert Payload.type(shm) == :shm
+    test "Payload.module/1 should return shm module", %{shm: shm} do
+      assert Payload.module(shm) == Shm
     end
   end
 

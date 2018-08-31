@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include "lib.h"
+
 typedef struct _ShmGuard {
   char name[NAME_MAX+1];
 } ShmGuard;

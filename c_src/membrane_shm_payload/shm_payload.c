@@ -1,5 +1,4 @@
 #include "shm_payload.h"
-#include "lib.h"
 
 ErlNifResourceType *RES_SHM_PAYLOAD_GUARD_TYPE;
 
@@ -20,46 +19,41 @@ int load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info) {
   return 0;
 }
 
-static int create(ErlNifEnv* env, ShmPayload * payload, int *fd, ERL_NIF_TERM *return_term) {
-  if (payload->name_len > NAME_MAX) {
-    *return_term = membrane_util_make_error_args(env, "name", "Name too long");
-    return -1;
-  }
-
-  *fd = shm_open(payload->name, O_RDWR | O_CREAT | O_EXCL, 0666);
-  if (*fd < 0) {
-    *return_term = membrane_util_make_error_errno(env, "shm_open");
-    return -1;
-  }
-
-  int res = ftruncate(*fd, payload->capacity);
-  if (res < 0) {
-    *return_term = membrane_util_make_error_errno(env, "ftruncate");
-    return -1;
-  }
-
+static void create_guard(ErlNifEnv * env, ShmPayload *payload) {
   ShmGuard *guard = enif_alloc_resource(RES_SHM_PAYLOAD_GUARD_TYPE, sizeof(*guard));
   strcpy(guard->name, payload->name);
   payload->guard = enif_make_resource(env, guard);
   enif_release_resource(guard);
-  return 0;
 }
 
-static ERL_NIF_TERM export_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+static ERL_NIF_TERM export_allocate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   UNUSED(argc);
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
   ERL_NIF_TERM return_term;
-  int fd = -1;
 
-  if (create(env, &payload, &fd, &return_term) == 0) {
+  ShmPayloadLibResult result = shm_payload_allocate(&payload);
+
+  if (SHM_PAYLOAD_RES_OK == result) {
+    create_guard(env, &payload);
     return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
+  } else {
+    return_term = shm_payload_make_error_term(env, result);
   }
 
-  if (fd > 0) {
-    close(fd);
-  }
-  shm_payload_free(&payload);
+  shm_payload_release(&payload);
   return return_term;
+}
+
+static ERL_NIF_TERM export_add_guard(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
+  UNUSED(argc);
+  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
+
+  ShmGuard * guard;
+  if (enif_get_resource(env, payload.guard, RES_SHM_PAYLOAD_GUARD_TYPE, (void **) &guard)) {
+    return membrane_util_make_error(env, enif_make_atom(env, "already_guarded"));
+  };
+  create_guard(env, &payload);
+  return membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
 }
 
 static ERL_NIF_TERM export_set_capacity(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -74,7 +68,7 @@ static ERL_NIF_TERM export_set_capacity(ErlNifEnv* env, int argc, const ERL_NIF_
   } else {
     return_term = shm_payload_make_error_term(env, result);
   }
-  shm_payload_free(&payload);
+  shm_payload_release(&payload);
   return return_term;
 }
 
@@ -86,13 +80,13 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
   ERL_NIF_TERM return_term;
   if (cnt > payload.size) {
     return_term = membrane_util_make_error_args(env, "cnt", "cnt is greater than payload size");
-    goto read_exit;
+    goto exit_read;
   }
 
   ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
-    goto read_exit;
+    goto exit_read;
   }
 
   ERL_NIF_TERM out_bin_term;
@@ -100,8 +94,8 @@ static ERL_NIF_TERM export_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
   memcpy(output_data, payload.mapped_memory, cnt);
 
   return_term = membrane_util_make_ok_tuple(env, out_bin_term);
-read_exit:
-  shm_payload_free(&payload);
+exit_read:
+  shm_payload_release(&payload);
   return return_term;
 }
 
@@ -118,46 +112,53 @@ static ERL_NIF_TERM export_write(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
   ShmPayloadLibResult result = shm_payload_open_and_mmap(&payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
-    goto write_exit;
+    goto exit_write;
   }
 
   memcpy(payload.mapped_memory, (void *)data.data, data.size);
   payload.size = data.size;
   return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
-write_exit:
-  shm_payload_free(&payload);
+exit_write:
+  shm_payload_release(&payload);
   return return_term;
 }
 
 static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   UNUSED(argc);
   MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, old_payload);
-  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(1, new_payload);
-  MEMBRANE_UTIL_PARSE_UINT_ARG(2, split_pos);
+  MEMBRANE_UTIL_PARSE_UINT_ARG(1, split_pos);
+  ShmPayload new_payload;
+  shm_payload_init(env, &new_payload, 4096);
 
   ERL_NIF_TERM return_term;
   int new_fd = -1;
-  ShmPayloadLibResult result = shm_payload_open_and_mmap(&old_payload);
 
+  ShmPayloadLibResult result = shm_payload_open_and_mmap(&old_payload);
   if (SHM_PAYLOAD_RES_OK != result) {
     return_term = shm_payload_make_error_term(env, result);
-    goto split_at_exit;
-  }
-
-  if (create(env, &new_payload, &new_fd, &return_term) < 0) {
-    goto split_at_exit;
+    goto exit_split_at;
   }
 
   int new_size = old_payload.size - split_pos;
+  new_payload.capacity = new_size;
+  new_payload.size = new_size;
 
-  int res = write(new_fd, old_payload.mapped_memory + split_pos, new_size);
-  if (res < 0) {
-    return_term = membrane_util_make_error_errno(env, "write");
-    goto split_at_exit;
+  result = shm_payload_allocate(&new_payload);
+  create_guard(env, &new_payload);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_split_at;
   }
 
+  result = shm_payload_open_and_mmap(&new_payload);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_split_at;
+  }
+
+  memcpy(new_payload.mapped_memory, old_payload.mapped_memory + split_pos, new_size);
+
   old_payload.size = split_pos;
-  new_payload.size = res;
 
   return_term = membrane_util_make_ok_tuple(
     env,
@@ -168,21 +169,81 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv* env, int argc, const ERL_NIF_TERM
     )
   );
 
-split_at_exit:
+exit_split_at:
   if (new_fd > 0) {
     close(new_fd);
   }
-  shm_payload_free(&old_payload);
-  shm_payload_free(&new_payload);
+  shm_payload_release(&old_payload);
+  shm_payload_release(&new_payload);
+  return return_term;
+}
+
+static ERL_NIF_TERM export_trim_leading(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  UNUSED(argc);
+  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, payload);
+  MEMBRANE_UTIL_PARSE_UINT_ARG(1, offset);
+  ERL_NIF_TERM return_term;
+  ShmPayloadLibResult result;
+
+  result = shm_payload_open_and_mmap(&payload);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_trim_leading;
+  }
+
+  size_t new_size = payload.size - offset;
+  memmove(payload.mapped_memory, payload.mapped_memory + offset, new_size);
+  payload.size = new_size;
+  return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &payload));
+exit_trim_leading:
+  shm_payload_release(&payload);
+  return return_term;
+}
+
+static ERL_NIF_TERM export_concat(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  UNUSED(argc);
+  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(0, left);
+  MEMBRANE_UTIL_PARSE_SHM_PAYLOAD_ARG(1, right);
+  ERL_NIF_TERM return_term;
+  ShmPayloadLibResult result;
+
+  size_t new_capacity = left.size + right.size;
+  result = shm_payload_set_capacity(&left, new_capacity);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_concat;
+  }
+
+  result = shm_payload_open_and_mmap(&left);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_concat;
+  }
+
+  result = shm_payload_open_and_mmap(&right);
+  if (SHM_PAYLOAD_RES_OK != result) {
+    return_term = shm_payload_make_error_term(env, result);
+    goto exit_concat;
+  }
+
+  memcpy(left.mapped_memory + left.size, right.mapped_memory, right.size);
+  left.size = new_capacity;
+  return_term = membrane_util_make_ok_tuple(env, shm_payload_make_term(env, &left));
+exit_concat:
+  shm_payload_release(&left);
+  shm_payload_release(&right);
   return return_term;
 }
 
 static ErlNifFunc nif_funcs[] = {
-  {"create", 1, export_create, 0},
+  {"allocate", 1, export_allocate, 0},
+  {"add_guard", 1, export_add_guard, 0},
   {"set_capacity", 2, export_set_capacity, 0},
   {"read", 2, export_read, 0},
   {"write", 2, export_write, 0},
-  {"split_at", 3, export_split_at, 0},
+  {"split_at", 2, export_split_at, 0},
+  {"concat", 2, export_concat, 0},
+  {"trim_leading", 2, export_trim_leading, 0}
 };
 
 ERL_NIF_INIT(Elixir.Membrane.Payload.Shm.Native.Nif, nif_funcs, load, NULL, NULL, NULL)

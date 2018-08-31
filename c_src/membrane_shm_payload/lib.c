@@ -1,9 +1,35 @@
 #include "lib.h"
 
+void shm_payload_generate_name(ShmPayload * payload) {
+  static const unsigned GENERATED_NAME_SIZE = strlen(SHM_NAME_PREFIX) + 21;
+  if (payload->name != NULL) {
+    enif_free(payload->name);
+  }
+  payload->name = enif_alloc(GENERATED_NAME_SIZE);
+
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  snprintf(payload->name, GENERATED_NAME_SIZE, SHM_NAME_PREFIX "%.12ld%.8ld", ts.tv_sec, ts.tv_nsec);
+}
+
+/**
+ * Initializes ShmPayload C struct. Should be used before allocating shm from C code.
+ *
+ * Each call should be paired with `shm_payload_release` call to deallocate resources.
+ */
+void shm_payload_init(ErlNifEnv * env, ShmPayload * payload, unsigned capacity) {
+  payload->guard = enif_make_atom(env, "nil");
+  payload->size = 0;
+  payload->capacity = capacity;
+  payload->mapped_memory = MAP_FAILED;
+  payload->elixir_struct_atom = enif_make_atom(env, SHM_PAYLOAD_ELIXIR_STRUCT_ATOM);
+  payload->name = NULL;
+}
+
 /**
  * Initializes ShmPayload C struct using data from Membrane.Payload.Shm Elixir struct
  *
- * Each call should be paired with `shm_payload_free` call to deallocate resources
+ * Each call should be paired with `shm_payload_release` call to deallocate resources
  */
 int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayload *payload) {
   const ERL_NIF_TERM ATOM_STRUCT_TAG = enif_make_atom(env, "__struct__");
@@ -29,7 +55,7 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   if (!result) {
     return 0;
   }
-  payload->elixir_struct_tag = tmp_term;
+  payload->elixir_struct_atom = tmp_term;
 
   // Get size
   result = enif_get_map_value(env, struct_term, ATOM_SIZE, &tmp_term);
@@ -56,6 +82,17 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   if (!result) {
     return 0;
   }
+  char atom_tmp[4];
+  result = enif_get_atom(env, tmp_term, atom_tmp, 4, ERL_NIF_LATIN1);
+  if (result) {
+    if (strncmp(atom_tmp, "nil", 3) == 0) {
+      payload->name = NULL;
+      return 1;
+    }
+
+    return 0;
+  }
+
   ErlNifBinary name_binary;
   result = enif_inspect_binary(env, tmp_term, &name_binary);
   if (!result) {
@@ -64,17 +101,60 @@ int shm_payload_get_from_term(ErlNifEnv * env, ERL_NIF_TERM struct_term, ShmPayl
   payload->name = enif_alloc(name_binary.size + 1);
   memcpy(payload->name, (char *) name_binary.data, name_binary.size);
   payload->name[name_binary.size] = '\0';
-  payload->name_len = name_binary.size;
 
   return 1;
 }
 
 /**
- * Frees resources allocated by `shm_payload_get_from_term`
+ * Allocates POSIX shared memory given the data (name, capacity) in ShmPayload struct.
+ *
+ * If name in ShmPayload is set to NULL, the name will be (re)genrated until
+ * the one that haven't been used is found (at most SHM_PAYLOAD_ALLOC_MAX_ATTEMPTS times).
+ *
+ * Shared memory can be accessed by using 'shm_payload_open_and_mmap'.
+ * Memory will be unmapped when ShmPayload struct is freed (by 'shm_payload_release')
+ */
+ShmPayloadLibResult shm_payload_allocate(ShmPayload * payload) {
+  ShmPayloadLibResult result;
+  int fd = -1;
+
+  int attempts = 1;
+  if (payload->name == NULL) {
+    shm_payload_generate_name(payload);
+    attempts = SHM_PAYLOAD_ALLOC_MAX_ATTEMPTS;
+  }
+  fd = shm_open(payload->name, O_RDWR | O_CREAT | O_EXCL, 0666);
+  while (fd < 0) {
+    attempts--;
+    if (errno != EEXIST || attempts <= 0) {
+      result = SHM_PAYLOAD_ERROR_SHM_OPEN;
+      goto shm_payload_create_exit;
+    }
+    shm_payload_generate_name(payload);
+    fd = shm_open(payload->name, O_RDWR | O_CREAT | O_EXCL, 0666);
+  }
+
+  int ftr_res = ftruncate(fd, payload->capacity);
+  if (ftr_res < 0) {
+    result = SHM_PAYLOAD_ERROR_FTRUNCATE;
+    goto shm_payload_create_exit;
+  }
+
+  result = SHM_PAYLOAD_RES_OK;
+shm_payload_create_exit:
+  if (fd > 0) {
+    close(fd);
+  }
+  return result;
+}
+
+/**
+ * Deallocates resources owned by ShmPayload struct. It does not
+ * free the actual shared memory segment, just object representing it.
  *
  * If payload was mapped, unmaps it as well.
  */
-void shm_payload_free(ShmPayload *payload) {
+void shm_payload_release(ShmPayload *payload) {
   if (payload->name != NULL) {
     enif_free(payload->name);
   }
@@ -95,11 +175,12 @@ ERL_NIF_TERM shm_payload_make_term(ErlNifEnv * env, ShmPayload * payload) {
   };
 
   ERL_NIF_TERM name_term;
-  void * name_ptr = enif_make_new_binary(env, payload->name_len, &name_term);
-  memcpy(name_ptr, payload->name, payload->name_len);
+  unsigned name_len = strlen(payload->name);
+  void * name_ptr = enif_make_new_binary(env, name_len, &name_term);
+  memcpy(name_ptr, payload->name, name_len);
 
   ERL_NIF_TERM values[SHM_PAYLOAD_ELIXIR_STRUCT_ENTRIES] = {
-    payload->elixir_struct_tag,
+    payload->elixir_struct_atom,
     name_term,
     payload->guard,
     enif_make_int(env, payload->size),
@@ -180,7 +261,7 @@ shm_payload_set_capacity_exit:
  * On success sets payload->mapped_memory to a valid pointer. On failure it is set to
  * MAP_FAILED ((void *)-1) and returned result indicates which function failed.
  *
- * Mapped memory has to be released with either 'shm_payload_free' or 'shm_payload_unmap'.
+ * Mapped memory has to be released with either 'shm_payload_release' or 'shm_payload_unmap'.
  *
  * While memory is mapped the capacity of shm must not be modified.
  */

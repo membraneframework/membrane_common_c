@@ -10,6 +10,7 @@ defmodule Membrane.Payload.Shm do
   and then access the shared memory from the native code.
   """
   alias __MODULE__.Native
+  @behaviour Membrane.Payload.Behaviour
 
   @typedoc """
   Struct describing payload kept in shared memory.
@@ -24,19 +25,26 @@ defmodule Membrane.Payload.Shm do
           capacity: pos_integer()
         }
 
-  @enforce_keys [:name]
   defstruct name: nil, guard: nil, size: 0, capacity: 4096
 
+  @impl true
   @doc """
   Creates a new, empty Shm payload
   """
+  def empty() do
+    empty(4096)
+  end
+
+  @doc """
+  Creates a new, empty Shm payload with the given capacity
+  """
   @spec empty(pos_integer()) :: t()
-  def empty(capacity \\ 4096) do
-    name = generate_name()
-    {:ok, payload} = Native.create(%__MODULE__{name: name, capacity: capacity})
+  def empty(capacity) do
+    {:ok, payload} = create(capacity)
     payload
   end
 
+  @impl true
   @doc """
   Creates a new Shm payload from existing data.
   """
@@ -52,8 +60,7 @@ defmodule Membrane.Payload.Shm do
   """
   @spec new(data :: binary(), capacity :: pos_integer()) :: t()
   def new(data, capacity) when capacity > 0 do
-    name = generate_name()
-    {:ok, payload} = Native.create(%__MODULE__{name: name, capacity: capacity})
+    {:ok, payload} = create(capacity)
     {:ok, payload} = Native.write(payload, data)
     payload
   end
@@ -64,34 +71,55 @@ defmodule Membrane.Payload.Shm do
   If the capacity is smaller than the current size, data will be discarded and size modified
   """
   @spec set_capacity(t(), pos_integer()) :: t()
-  defdelegate set_capacity(payload, capacity), to: Native
+  def set_capacity(payload, capacity) do
+    {:ok, new_payload} = Native.set_capacity(payload, capacity)
+    new_payload
+  end
 
-  defp generate_name do
-    "/membrane_#{inspect(System.system_time(:nanosecond))}_#{inspect(:rand.uniform(100))}"
+  defp create(capacity) do
+    shm_struct = %__MODULE__{capacity: capacity}
+    Native.allocate(shm_struct)
   end
 end
 
 defimpl Membrane.Payload, for: Membrane.Payload.Shm do
   alias Membrane.Payload.Shm
 
+  @impl true
   @spec size(payload :: Shm.t()) :: non_neg_integer
   def size(%Shm{size: size}) do
     size
   end
 
+  @impl true
   @spec split_at(payload :: Shm.t(), pos_integer) :: {Shm.t(), Shm.t()}
-  def split_at(%Shm{name: name, size: size} = shm, at_pos) when 0 < at_pos and at_pos < size do
-    new_name = name <> "-2"
-    {:ok, payloads} = Shm.Native.split_at(shm, %Shm{name: new_name}, at_pos)
+  def split_at(%Shm{size: size} = shm, at_pos) when 0 < at_pos and at_pos < size do
+    {:ok, payloads} = Shm.Native.split_at(shm, at_pos)
     payloads
   end
 
+  @impl true
+  @spec concat(left :: Shm.t(), right :: Shm.t()) :: Shm.t()
+  def concat(left, right) do
+    {:ok, res} = Shm.Native.concat(left, right)
+    res
+  end
+
+  @impl true
+  @spec drop(payload :: Shm.t(), n :: non_neg_integer()) :: Shm.t()
+  def drop(payload, n) do
+    {:ok, new_payload} = Shm.Native.trim(payload, n)
+    new_payload
+  end
+
+  @impl true
   @spec to_binary(payload :: Shm.t()) :: binary()
   def to_binary(payload) do
     {:ok, bin} = Shm.Native.read(payload)
     bin
   end
 
-  @spec type(payload :: Shm.t()) :: :shm
-  def type(_), do: :shm
+  @impl true
+  @spec module(payload :: Shm.t()) :: module()
+  def module(_), do: Shm
 end
