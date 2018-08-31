@@ -8,7 +8,7 @@ defmodule Membrane.Payload.Shm.Native do
   use Bundlex.Loader, nif: :membrane_shm_payload
 
   @doc """
-  Creates shared memory segment and add guard for it.
+  Creates shared memory segment and adds a guard for it.
 
   The guard associated with this memory segment is placed in returned
   `Membrane.Payload.Shm` struct. When the guard resource is deallocated by BEAM,

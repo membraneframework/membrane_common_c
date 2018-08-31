@@ -85,41 +85,41 @@ end
 defimpl Membrane.Payload, for: Membrane.Payload.Shm do
   alias Membrane.Payload.Shm
 
-  @spec empty(payload :: Shm.t()) :: Shm.t()
-  def empty(%Shm{}), do: Shm.empty()
-
-  @spec new(payload :: Shm.t(), binary()) :: Shm.t()
-  def new(%Shm{}, data), do: Shm.new(data)
-
+  @impl true
   @spec size(payload :: Shm.t()) :: non_neg_integer
   def size(%Shm{size: size}) do
     size
   end
 
+  @impl true
   @spec split_at(payload :: Shm.t(), pos_integer) :: {Shm.t(), Shm.t()}
   def split_at(%Shm{size: size} = shm, at_pos) when 0 < at_pos and at_pos < size do
     {:ok, payloads} = Shm.Native.split_at(shm, at_pos)
     payloads
   end
 
+  @impl true
   @spec concat(left :: Shm.t(), right :: Shm.t()) :: Shm.t()
   def concat(left, right) do
     {:ok, res} = Shm.Native.concat(left, right)
     res
   end
 
+  @impl true
   @spec drop(payload :: Shm.t(), n :: non_neg_integer()) :: Shm.t()
   def drop(payload, n) do
     {:ok, new_payload} = Shm.Native.trim(payload, n)
     new_payload
   end
 
+  @impl true
   @spec to_binary(payload :: Shm.t()) :: binary()
   def to_binary(payload) do
     {:ok, bin} = Shm.Native.read(payload)
     bin
   end
 
+  @impl true
   @spec module(payload :: Shm.t()) :: module()
   def module(_), do: Shm
 end
