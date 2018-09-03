@@ -18,17 +18,6 @@ defmodule Membrane.Common.C.BundlexProject do
         export_only?: Mix.env() != :test,
         src_base: "membrane_ringbuffer",
         sources: ["ringbuffer.c"]
-      ],
-      membrane_shm_payload: [
-        deps: [membrane_common_c: [:membrane, :membrane_shm_payload_lib]],
-        src_base: "membrane_shm_payload",
-        sources: ["shm_payload.c"]
-      ],
-      membrane_shm_payload_lib: [
-        export_only?: Mix.env() != :test,
-        deps: [membrane_common_c: :membrane],
-        src_base: "membrane_shm_payload",
-        sources: ["lib.c"]
       ]
     ]
   end
