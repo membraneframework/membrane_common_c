@@ -12,7 +12,7 @@ defmodule Membrane.Common.C.BundlexProject do
       membrane: [
         export_only?: Mix.env() != :test,
         src_base: "membrane",
-        sources: ["membrane.c", "log.c"]
+        sources: ["log.c"]
       ],
       membrane_ringbuffer: [
         export_only?: Mix.env() != :test,
