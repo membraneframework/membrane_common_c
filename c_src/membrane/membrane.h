@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdarg.h>
-#include <erl_nif.h>
 #include <string.h>
 #include <errno.h>
 #ifdef __GNUC__

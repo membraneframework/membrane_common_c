@@ -11,8 +11,8 @@
  * It should be freed using membrane_ringbuffer_destroy after usage.
  */
 MembraneRingBuffer* membrane_ringbuffer_new(size_t max_elements, size_t element_size) {
-  MembraneRingBuffer *ringbuffer = enif_alloc(sizeof(MembraneRingBuffer));
-  ringbuffer->buffer = enif_alloc(max_elements * element_size);
+  MembraneRingBuffer *ringbuffer = unifex_alloc(sizeof(MembraneRingBuffer));
+  ringbuffer->buffer = unifex_alloc(max_elements * element_size);
   /*
    * write_index and read_index will be kept modulo (max_elements * 2)
    * while actual indices for read/write will be calculated using modulo (max_elements)
@@ -142,6 +142,6 @@ void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer) {
  *
  */
 void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer) {
-  enif_free(ringbuffer->buffer);
-  enif_free(ringbuffer);
+  unifex_free(ringbuffer->buffer);
+  unifex_free(ringbuffer);
 }
