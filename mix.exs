@@ -48,8 +48,8 @@ defmodule Membrane.Common.C.Mixfile do
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:membrane_core, github: "membraneframework/membrane-core"},
       {:bundlex, "~> 0.1.3"},
-      {:shmex, "~> 0.1"},
-      {:unifex, github: "membraneframework/unifex", branch: "feature/send"}
+      {:shmex, github: "membraneframework/shmex"},
+      {:unifex, github: "membraneframework/unifex"}
     ]
   end
 end
