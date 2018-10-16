@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdatomic.h>
-#include <erl_nif.h>
+#include <unifex/unifex.h>
 
 typedef struct _MembraneRingBuffer MembraneRingBuffer;
 struct _MembraneRingBuffer
@@ -27,4 +27,3 @@ size_t membrane_ringbuffer_get_read_available(MembraneRingBuffer* ringbuffer);
 size_t membrane_ringbuffer_read(MembraneRingBuffer* ringbuffer, void *dest, size_t cnt);
 void membrane_ringbuffer_cleanup(MembraneRingBuffer* ringbuffer);
 void membrane_ringbuffer_destroy(MembraneRingBuffer* ringbuffer);
-
