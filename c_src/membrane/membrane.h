@@ -1,8 +1,8 @@
 #pragma once
 
+#include <errno.h>
 #include <stdarg.h>
 #include <string.h>
-#include <errno.h>
 #ifdef __GNUC__
 #include <stdint.h>
 #endif
