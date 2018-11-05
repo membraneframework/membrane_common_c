@@ -8,7 +8,7 @@ defmodule Membrane.Common.C.Mixfile do
     [
       app: :membrane_common_c,
       version: @version,
-      elixir: "~> 1.6",
+      elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:unifex, :bundlex] ++ Mix.compilers(),
       description: "Membrane Multimedia Framework (C language common routines)",
@@ -48,8 +48,8 @@ defmodule Membrane.Common.C.Mixfile do
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:membrane_core, github: "membraneframework/membrane-core"},
       {:bundlex, "~> 0.1.3"},
-      {:shmex, github: "membraneframework/shmex"},
-      {:unifex, github: "membraneframework/unifex"}
+      {:shmex, "~> 0.1.2"},
+      {:unifex, "~> 0.1.0"}
     ]
   end
 end

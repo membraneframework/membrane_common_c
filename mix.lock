@@ -1,5 +1,5 @@
 %{
-  "bunch": {:hex, :bunch, "0.1.1", "6a010c8d7a9e52294a359cfe2fc669ce0472f7cb467c85a432994a3314732a0b", [:mix], [], "hexpm"},
+  "bunch": {:hex, :bunch, "0.1.2", "2389a4bcdb62382fbfeed9e19952cc22452dc0c01b4bcac941cce00ef212d7b4", [:mix], [], "hexpm"},
   "bunch_native": {:hex, :bunch_native, "0.1.1", "9895b2cf5e5c6847af5de80c8d485ea9c69021a21e74c7237ab64e7a225c06c2", [:mix], [{:bundlex, "~> 0.1", [hex: :bundlex, repo: "hexpm", optional: false]}], "hexpm"},
   "bundlex": {:hex, :bundlex, "0.1.3", "f55cce979fe656e48ae7fc4d36a90c65fce907632d65b54828388735a71b840b", [:mix], [{:porcelain, "~> 2.0", [hex: :porcelain, repo: "hexpm", optional: false]}], "hexpm"},
   "earmark": {:hex, :earmark, "1.2.6", "b6da42b3831458d3ecc57314dff3051b080b9b2be88c2e5aa41cd642a5b044ed", [:mix], [], "hexpm"},
@@ -10,6 +10,6 @@
   "nimble_parsec": {:hex, :nimble_parsec, "0.2.2", "d526b23bdceb04c7ad15b33c57c4526bf5f50aaa70c7c141b4b4624555c68259", [:mix], [], "hexpm"},
   "porcelain": {:hex, :porcelain, "2.0.3", "2d77b17d1f21fed875b8c5ecba72a01533db2013bd2e5e62c6d286c029150fdc", [:mix], [], "hexpm"},
   "qex": {:hex, :qex, "0.4.0", "43516761a2d278755d5f6da28eab86ddb0808bca90c1e186ec89a3ea26855928", [:mix], [], "hexpm"},
-  "shmex": {:git, "https://github.com/membraneframework/shmex.git", "5b7e32a6cbb94e48740eb07da01515bce22682eb", []},
-  "unifex": {:git, "https://github.com/membraneframework/unifex.git", "17b8e177aaea853df7647976107dad55fbf47bdf", []},
+  "shmex": {:hex, :shmex, "0.1.2", "c12c11b7bf315589d7aef4de1030e5d15c72c25a828624daf81d76a50ce894c2", [:mix], [{:bunch, "~> 0.1.2", [hex: :bunch, repo: "hexpm", optional: false]}, {:bunch_native, "~> 0.1.1", [hex: :bunch_native, repo: "hexpm", optional: false]}, {:bundlex, "~> 0.1.3", [hex: :bundlex, repo: "hexpm", optional: false]}], "hexpm"},
+  "unifex": {:hex, :unifex, "0.1.0", "1937dfceba8fe9b9cbc58d1091615e07814c736cc5adf8b159f8e65a9b4468f4", [:mix], [{:bunch, "~> 0.1.2", [hex: :bunch, repo: "hexpm", optional: false]}, {:bundlex, "~> 0.1.3", [hex: :bundlex, repo: "hexpm", optional: false]}, {:shmex, "~> 0.1.2", [hex: :shmex, repo: "hexpm", optional: false]}], "hexpm"},
 }
