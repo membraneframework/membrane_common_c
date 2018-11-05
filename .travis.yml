@@ -1,7 +1,6 @@
 language: elixir
 elixir:
-  - '1.6.6'
-  - '1.7.2'
+  - 1.7
 otp_release:
   - 21.0
 sudo: false
@@ -10,9 +9,9 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - gcc-4.9
+    - gcc-8
 before_install:
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 100
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100
 script:
   - mix format --check-formatted
   - mix test
