@@ -6,8 +6,14 @@
 
 #include "log.h"
 
+#include <stdio.h>
+#include <time.h>
+
 static char *log_level_to_string(int level);
 static void current_time_as_string(char time[255]);
+static int send_to_log_router(UnifexEnv *find_env, UnifexEnv *msg_env,
+                              int flags, char *level, char *msg, char *time_str,
+                              char *tag);
 
 /**
  * Builds log message from string containing format and from va_list with
@@ -38,25 +44,40 @@ int membrane_log(UnifexEnv *env, int level, char *log_tag, int is_threaded,
 
   memcpy(msg + msg_size, "\r\n\0", 3);
 
-  UnifexPid router_pid;
-
-  int flags = is_threaded ? UNIFEX_SEND_THREADED : UNIFEX_NO_FLAGS;
-
   char *level_str = log_level_to_string(level);
 
   char time_str[255];
   current_time_as_string(time_str);
 
-  char *tags[] = {"nif", log_tag};
+  int res;
 
-  int res =
-      unifex_get_pid_by_name(env, "Elixir.Membrane.Log.Router", &router_pid) &&
-      send_membrane_log(env, router_pid, flags, level_str, msg, time_str, tags,
-                        2);
-
+  if (is_threaded && env == NULL) {
+    UnifexEnv *msg_env = unifex_alloc_env();
+    res = send_to_log_router(NULL, msg_env, UNIFEX_SEND_THREADED, level_str,
+                             msg, time_str, log_tag);
+    unifex_free_env(msg_env);
+  } else if (is_threaded) {
+    res = send_to_log_router(NULL, env, UNIFEX_SEND_THREADED, level_str, msg,
+                             time_str, log_tag);
+  } else {
+    res = send_to_log_router(env, env, UNIFEX_NO_FLAGS, level_str, msg,
+                             time_str, log_tag);
+  }
   unifex_free(msg);
 
   return res;
+}
+
+static int send_to_log_router(UnifexEnv *find_env, UnifexEnv *msg_env,
+                              int flags, char *level, char *msg, char *time_str,
+                              char *tag) {
+  UnifexPid router_pid;
+  char *tags[] = {"nif", tag};
+
+  return unifex_get_pid_by_name(find_env, "Elixir.Membrane.Log.Router",
+                                &router_pid) &&
+         send_membrane_log(msg_env, router_pid, flags, level, msg, time_str,
+                           tags, 2);
 }
 
 static char *log_level_to_string(int level) {
