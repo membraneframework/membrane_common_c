@@ -48,8 +48,8 @@ defmodule Membrane.Common.C.Mixfile do
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:membrane_core, "~> 0.2.0"},
       {:bundlex, "~> 0.1.3"},
-      {:shmex, "~> 0.1.2"},
-      {:unifex, "~> 0.1.0"}
+      {:shmex, "~> 0.1.3"},
+      {:unifex, "~> 0.2.0"}
     ]
   end
 end

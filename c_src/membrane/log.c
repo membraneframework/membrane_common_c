@@ -1,10 +1,11 @@
 /**
  * Membrane Common C routines: Logging.
- *
- * All Rights Reserved, (c) 2017 Mateusz Nowak
  */
 
 #include "log.h"
+
+#include <stdio.h>
+#include <time.h>
 
 static char *log_level_to_string(int level);
 static void current_time_as_string(char time[255]);
@@ -38,22 +39,19 @@ int membrane_log(UnifexEnv *env, int level, char *log_tag, int is_threaded,
 
   memcpy(msg + msg_size, "\r\n\0", 3);
 
-  UnifexPid router_pid;
-
-  int flags = is_threaded ? UNIFEX_SEND_THREADED : UNIFEX_NO_FLAGS;
-
   char *level_str = log_level_to_string(level);
 
   char time_str[255];
   current_time_as_string(time_str);
 
+  int flags = is_threaded ? UNIFEX_FROM_CREATED_THREAD : UNIFEX_NO_FLAGS;
   char *tags[] = {"nif", log_tag};
 
-  int res =
-      unifex_get_pid_by_name(env, "Elixir.Membrane.Log.Router", &router_pid) &&
-      send_membrane_log(env, router_pid, flags, level_str, msg, time_str, tags,
-                        2);
-
+  UnifexPid router_pid;
+  int res = unifex_get_pid_by_name(env, "Elixir.Membrane.Log.Router", flags,
+                                   &router_pid) &&
+            send_membrane_log(env, router_pid, flags, level_str, msg, time_str,
+                              tags, 2);
   unifex_free(msg);
 
   return res;
