@@ -49,9 +49,7 @@ defmodule Membrane.Common.C.Mixfile do
       {:membrane_core, "~> 0.2.0"},
       {:bundlex, "~> 0.1.3"},
       {:shmex, "~> 0.1.3"},
-      # {:unifex, "~> 0.1.1"}
-      {:unifex, "~> 0.1.1",
-       github: "membraneframework/unifex", branch: "feature/lifecycle-callbacks", override: true}
+      {:unifex, "~> 0.2.0"}
     ]
   end
 end
