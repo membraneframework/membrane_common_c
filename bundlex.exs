@@ -3,21 +3,19 @@ defmodule Membrane.Common.C.BundlexProject do
 
   def project do
     [
-      nifs: nifs(Bundlex.platform())
+      libs: libs()
     ]
   end
 
-  defp nifs(_platform) do
+  defp libs do
     [
       membrane: [
         deps: [unifex: :unifex],
-        export_only?: Mix.env() != :test,
         src_base: "membrane",
         sources: ["log.c", "_generated/log.c"]
       ],
       membrane_ringbuffer: [
         deps: [unifex: :unifex],
-        export_only?: Mix.env() != :test,
         src_base: "membrane_ringbuffer",
         sources: ["ringbuffer.c"]
       ]
