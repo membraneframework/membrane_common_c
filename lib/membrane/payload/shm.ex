@@ -27,7 +27,7 @@ defimpl Membrane.Payload, for: Shmex do
 
   @impl true
   def concat(left, right) do
-    {:ok, res} = Shmex.Native.concat(left, right)
+    {:ok, res} = Shmex.Native.append(left, right)
     res
   end
 
@@ -38,10 +38,7 @@ defimpl Membrane.Payload, for: Shmex do
   end
 
   @impl true
-  def to_binary(payload) do
-    {:ok, bin} = Shmex.Native.read(payload)
-    bin
-  end
+  defdelegate to_binary(payload), to: Shmex
 
   @impl true
   def module(_), do: Membrane.Payload.Shm
