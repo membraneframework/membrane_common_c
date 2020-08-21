@@ -47,9 +47,8 @@ defmodule Membrane.Common.C.Mixfile do
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:membrane_core, "~> 0.5.0"},
-      {:bundlex, "~> 0.2.0"},
       {:shmex, "~> 0.2.0"},
-      {:unifex, "~> 0.2.0"}
+      {:unifex, github: "membraneframework/unifex"}
     ]
   end
 end
