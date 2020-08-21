@@ -10,11 +10,13 @@ defmodule Membrane.Common.C.BundlexProject do
   defp libs do
     [
       membrane: [
-        deps: [unifex: :unifex],
+        interface: :nif,
         src_base: "membrane",
-        sources: ["log.c", "_generated/log.c"]
+        sources: ["log.c"],
+        preprocessor: Unifex
       ],
       membrane_ringbuffer: [
+        interface: :nif,
         deps: [unifex: :unifex],
         src_base: "membrane_ringbuffer",
         sources: ["ringbuffer.c"]
