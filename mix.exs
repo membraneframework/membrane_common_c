@@ -1,7 +1,7 @@
 defmodule Membrane.Common.C.Mixfile do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.4.0"
   @github_url "https://github.com/membraneframework/membrane-common-c"
 
   def project do
@@ -45,11 +45,10 @@ defmodule Membrane.Common.C.Mixfile do
 
   defp deps() do
     [
-      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
       {:membrane_core, "~> 0.5.0"},
-      {:bundlex, "~> 0.2.0"},
-      {:shmex, "~> 0.2.0"},
-      {:unifex, "~> 0.2.0"}
+      {:shmex, "~> 0.3.0"},
+      {:unifex, "~> 0.3.0"}
     ]
   end
 end

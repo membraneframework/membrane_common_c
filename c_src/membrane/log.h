@@ -3,7 +3,7 @@
  * Membrane Common C routines: Logging.
  */
 
-#include "_generated/log.h"
+#include "_generated/membrane.h"
 #include <stdarg.h>
 
 #define MEMBRANE_LOG_LEVEL_DEBUG 0
