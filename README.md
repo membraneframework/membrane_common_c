@@ -16,6 +16,18 @@ The following [Bundlex](https://hex.pm/packages/bundlex) dependencies are export
 
 The source code is available at [GitHub](https://github.com/membraneframework/membrane-common-c).
 
+## Installation
+
+The package can be installed by adding `membrane_common_c` to your list of dependencies in `mix.exs`:
+
+```elixir
+def deps do
+  [
+    {:membrane_common_c, "~> 0.9.0"},
+  ]
+end
+```
+
 Copyright 2018, [Software Mansion](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=membrane)
 
 [![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=membrane-github)](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=membrane)
