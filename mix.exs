@@ -1,14 +1,14 @@
 defmodule Membrane.Common.C.Mixfile do
   use Mix.Project
 
-  @version "0.10.0"
+  @version "0.11.0"
   @github_url "https://github.com/membraneframework/membrane-common-c"
 
   def project do
     [
       app: :membrane_common_c,
       version: @version,
-      elixir: "~> 1.7",
+      elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:unifex, :bundlex] ++ Mix.compilers(),
       description: "Membrane Multimedia Framework (C language common routines)",
@@ -26,7 +26,7 @@ defmodule Membrane.Common.C.Mixfile do
   defp package do
     [
       maintainers: ["Membrane Team"],
-      licenses: ["Apache 2.0"],
+      licenses: ["Apache-2.0"],
       files: ["lib", "c_src", "mix.exs", "README*", "LICENSE*", ".formatter.exs", "bundlex.exs"],
       links: %{
         "GitHub" => @github_url,
@@ -39,14 +39,15 @@ defmodule Membrane.Common.C.Mixfile do
     [
       main: "readme",
       extras: ["README.md"],
+      formatters: ["html"],
       source_ref: "v#{@version}"
     ]
   end
 
   defp deps() do
     [
-      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
-      {:membrane_core, "~> 0.8.0"},
+      {:ex_doc, "~> 0.28", only: :dev, runtime: false},
+      {:membrane_core, "~> 0.9.0"},
       {:shmex, "~> 0.4.0"},
       {:unifex, "~> 0.7.0"}
     ]
