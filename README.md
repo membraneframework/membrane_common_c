@@ -1,6 +1,6 @@
 # Membrane Multimedia Framework: Common C Routines
 
-[![CircleCI](https://circleci.com/gh/membraneframework/membrane-common-c.svg?style=svg)](https://circleci.com/gh/membraneframework/membrane-common-c)
+[![CircleCI](https://circleci.com/gh/membraneframework/membrane_common_c.svg?style=svg)](https://circleci.com/gh/membraneframework/membrane_common_c)
 [![Hex.pm](https://img.shields.io/hexpm/v/membrane_common_c.svg)](https://hex.pm/packages/membrane_common_c)
 [![API Docs](https://img.shields.io/badge/api-docs-yellow.svg?style=flat)](https://hexdocs.pm/membrane_common_c/)
 
@@ -14,7 +14,7 @@ The following [Bundlex](https://hex.pm/packages/bundlex) dependencies are export
 * `membrane` - helpers, logging functions and macros
 * `membrane_ringbuffer` - supplies ringbuffer utility
 
-The source code is available at [GitHub](https://github.com/membraneframework/membrane-common-c).
+The source code is available at [GitHub](https://github.com/membraneframework/membrane_common_c).
 
 ## Installation
 
@@ -23,7 +23,7 @@ The package can be installed by adding `membrane_common_c` to your list of depen
 ```elixir
 def deps do
   [
-    {:membrane_common_c, "~> 0.10.0"}
+    {:membrane_common_c, "~> 0.11.0"}
   ]
 end
 ```
