@@ -11,12 +11,16 @@ defmodule Membrane.Common.C.Mixfile do
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:unifex, :bundlex] ++ Mix.compilers(),
+      deps: deps(),
+
+      # hex
       description: "Membrane Multimedia Framework (C language common routines)",
       package: package(),
+
+      # docs
       name: "Membrane: Common C",
       source_url: @github_url,
-      docs: docs(),
-      deps: deps()
+      docs: docs()
     ]
   end
 
