@@ -4,14 +4,12 @@
 
 #define MAX_SIZE 4
 
-union Value
-{
+union Value {
   int32_t s_val;
   uint32_t u_val;
 };
 
-struct _RawAudio
-{
+struct _RawAudio {
   uint32_t channels;
   uint32_t sample_format;
   uint32_t sample_rate;
