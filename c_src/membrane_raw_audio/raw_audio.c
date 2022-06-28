@@ -33,14 +33,19 @@ int64_t raw_audio_sample_to_value(uint8_t *sample, RawAudio *raw_audio) {
     reverse_memcpy(&(ret.u_val), sample, size);
   }
 
-  uint32_t pad_left = MAX_SIZE - size;
-  ret.u_val <<= 8 * pad_left;
-
   bool is_signed = raw_audio->sample_format & MEMBRANE_SAMPLE_FORMAT_TYPE;
+
   if (is_signed) {
+
+    /**
+     * As the size of a sample might be smaller than the size of a ret.s_val
+     * we must bit shift to have a sign bit as a first bit.
+     */
+    uint32_t pad_left = MAX_SIZE - size;
+    ret.u_val <<= 8 * pad_left;
     return (int64_t)(ret.s_val >> 8 * pad_left);
   } else {
-    return (int64_t)(ret.u_val >> 8 * pad_left);
+    return (int64_t)ret.u_val;
   }
 }
 
