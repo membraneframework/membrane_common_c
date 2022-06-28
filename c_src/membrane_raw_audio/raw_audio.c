@@ -8,7 +8,7 @@ bool architecture_le() {
 
 void *reverse_memcpy(void *dest, const void *src, size_t len) {
   char *curr_dest = dest;
-  const char *curr_src = src + len;
+  const char *curr_src = src + len - 1;
   while (len--)
     *curr_dest++ = *curr_src--;
   return dest;
@@ -27,20 +27,10 @@ int64_t raw_audio_sample_to_value(uint8_t *sample, RawAudio *raw_audio) {
   union Value ret;
   ret.u_val = 0;
 
-  if (is_architecture_le && is_format_le) {
+  if (is_architecture_le == is_format_le) {
     memcpy(&(ret.u_val), sample, size);
-  } else if (!is_architecture_le && !is_format_le) {
-    reverse_memcpy(&(ret.u_val), sample, size);
-  } else if (!is_architecture_le && is_format_le) {
-    for (int8_t i = size - 1; i >= 0; --i) {
-      ret.u_val <<= 8;
-      ret.u_val += sample[i];
-    }
   } else {
-    for (int8_t i = 0; i < size; ++i) {
-      ret.u_val <<= 8;
-      ret.u_val += sample[i];
-    }
+    reverse_memcpy(&(ret.u_val), sample, size);
   }
 
   uint32_t pad_left = MAX_SIZE - size;
@@ -74,20 +64,10 @@ void raw_audio_value_to_sample(int64_t value, uint8_t *sample,
   bool is_architecture_le = architecture_le();
   uint8_t size = raw_audio_sample_byte_size(raw_audio);
 
-  if (is_architecture_le && is_format_le) {
+  if (is_architecture_le == is_format_le) {
     memcpy(sample, &(ret.u_val), size);
-  } else if (!is_architecture_le && !is_format_le) {
-    reverse_memcpy(sample, &(ret.u_val), size);
-  } else if (!is_architecture_le && is_format_le) {
-    for (uint8_t i = 0; i < size; ++i) {
-      sample[i] = ret.u_val & 0xFF;
-      ret.u_val >>= 8;
-    }
   } else {
-    for (int8_t i = size - 1; i >= 0; --i) {
-      sample[i] = ret.u_val & 0xFF;
-      ret.u_val >>= 8;
-    }
+    reverse_memcpy(sample, &(ret.u_val), size);
   }
 }
 
