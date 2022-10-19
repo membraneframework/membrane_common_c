@@ -52,6 +52,7 @@ defmodule Membrane.Common.C.Mixfile do
     [
       {:ex_doc, "~> 0.28", only: :dev, runtime: false},
       {:membrane_core, "~> 0.10.0"},
+      {:membrane_raw_video_format, "~> 0.2"},
       {:shmex, "~> 0.5.0"},
       {:unifex, "~> 1.0"}
     ]
