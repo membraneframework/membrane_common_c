@@ -6,7 +6,6 @@ defmodule Membrane.Common.C.Mixfile do
 
   def project do
     [
-      homepage_url: "https://membrane.stream",
       app: :membrane_common_c,
       version: @version,
       elixir: "~> 1.12",
@@ -21,7 +20,8 @@ defmodule Membrane.Common.C.Mixfile do
       # docs
       name: "Membrane: Common C",
       source_url: @github_url,
-      docs: docs()
+      docs: docs(),
+      homepage_url: "https://membrane.stream"
     ]
   end
 
