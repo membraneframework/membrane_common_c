@@ -51,7 +51,7 @@ defmodule Membrane.Common.C.Mixfile do
 
   defp deps() do
     [
-      {:ex_doc, "~> 0.28", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:membrane_core, "~> 1.0"},
       {:shmex, "~> 0.5.0"},
       {:unifex, "~> 1.0"}
