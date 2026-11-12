@@ -23,7 +23,7 @@ The package can be installed by adding `membrane_common_c` to your list of depen
 ```elixir
 def deps do
   [
-	{:membrane_common_c, "~> 0.16.2"}
+	{:membrane_common_c, "~> 0.16.3"}
   ]
 end
 ```

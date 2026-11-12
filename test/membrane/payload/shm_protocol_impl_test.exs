@@ -65,7 +65,7 @@ defmodule Membrane.Payload.Shm.ProtocolImplTest do
       %{shm: shm, content: content} = ctx
       at_pos = 10
       assert {shm_head, shm_tail} = Payload.split_at(shm, at_pos)
-      <<content_hd::binary-size(at_pos), content_tail::binary>> = content
+      {content_hd, content_tail} = :erlang.split_binary(content, at_pos)
       assert Payload.to_binary(shm_head) == content_hd
       assert Payload.to_binary(shm_tail) == content_tail
     end
