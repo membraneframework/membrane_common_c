@@ -118,8 +118,8 @@ size_t membrane_ringbuffer_read(MembraneRingBuffer *ringbuffer, void *dest,
     size_t copy_size = tail_items * ringbuffer->element_size;
     memcpy(dest, src, copy_size);
 
-    dest = ringbuffer->buffer;
-    src = src + (copy_size * ringbuffer->element_size);
+    dest = dest + copy_size;
+    src = ringbuffer->buffer;
     copy_size = (cnt - tail_items) * ringbuffer->element_size;
     memcpy(dest, src, copy_size);
   } else {
