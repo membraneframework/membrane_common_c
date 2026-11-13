@@ -9,11 +9,23 @@
  * It allows lock-free concurrent operation by one consumer and one producer.
  *
  * It should be freed using membrane_ringbuffer_destroy after usage.
+ * Returns NULL if either size is 0 or allocation fails.
  */
 MembraneRingBuffer *membrane_ringbuffer_new(size_t max_elements,
                                             size_t element_size) {
+  if (max_elements == 0 || element_size == 0 ||
+      max_elements > SIZE_MAX / 2 / element_size) {
+    return NULL;
+  }
   MembraneRingBuffer *ringbuffer = unifex_alloc(sizeof(MembraneRingBuffer));
+  if (ringbuffer == NULL) {
+    return NULL;
+  }
   ringbuffer->buffer = unifex_alloc(max_elements * element_size);
+  if (ringbuffer->buffer == NULL) {
+    unifex_free(ringbuffer);
+    return NULL;
+  }
   /*
    * write_index and read_index will be kept modulo (max_elements * 2)
    * while actual indices for read/write will be calculated using modulo
